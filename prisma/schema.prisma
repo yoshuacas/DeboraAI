@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chats     Chat[]
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+// Chat conversations (both coding agent and legal agent)
+model Chat {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  String   // JSON stringified array of {role, content, timestamp}
+  type      ChatType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+enum ChatType {
+  CODING
+  LEGAL
+}
+
+// Track code changes made by the coding agent
+model CodeChange {
+  id                    String   @id @default(cuid())
+  commitHash            String   @unique
+  description           String
+  filesChanged          String   // JSON stringified array of file paths
+  adminId               String
+  testsPassed           Boolean
+  deployedToStaging     Boolean  @default(false)
+  deployedToProduction  Boolean  @default(false)
+  createdAt             DateTime @default(now())
+
+  @@index([adminId])
+  @@index([deployedToStaging])
+  @@index([deployedToProduction])
+}
+
+// Example feature: Case management (Agent can add more models like this)
+model Case {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  status      String   @default("OPEN")
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
