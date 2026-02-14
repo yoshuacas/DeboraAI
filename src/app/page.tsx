@@ -1,3 +1,4 @@
+// Built with Claude Agent SDK
 // API Test Successful!
 
 export default function Home() {

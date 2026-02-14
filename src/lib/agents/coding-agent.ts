@@ -1,4 +1,4 @@
-import { BedrockClient, BedrockMessage } from './bedrock-client';
+import { ClaudeCodeClient, ClaudeCodeMessage } from './claude-code-client';
 import { buildCodebaseContext, formatContextForAgent, CodebaseContext } from './codebase-context';
 import { FileModification } from '../code-modification/file-manager';
 
@@ -7,7 +7,7 @@ import { FileModification } from '../code-modification/file-manager';
  */
 export interface CodeGenerationRequest {
   userRequest: string;
-  conversationHistory?: BedrockMessage[];
+  conversationHistory?: ClaudeCodeMessage[];
   focusedFiles?: string[];
   additionalContext?: string;
 }
@@ -45,13 +45,13 @@ export interface CodeGenerationResponse {
  * ```
  */
 export class CodingAgent {
-  private bedrockClient: BedrockClient;
+  private claudeCodeClient: ClaudeCodeClient;
   private projectRoot: string;
   private codebaseContext: CodebaseContext | null = null;
 
-  constructor(projectRoot: string, bedrockClient?: BedrockClient) {
+  constructor(projectRoot: string, claudeCodeClient?: ClaudeCodeClient) {
     this.projectRoot = projectRoot;
-    this.bedrockClient = bedrockClient || new BedrockClient();
+    this.claudeCodeClient = claudeCodeClient || new ClaudeCodeClient(projectRoot);
   }
 
   /**
@@ -80,7 +80,7 @@ export class CodingAgent {
       const userPrompt = this.buildUserPrompt(request);
 
       // Prepare messages
-      const messages: BedrockMessage[] = [
+      const messages: ClaudeCodeMessage[] = [
         ...(request.conversationHistory || []),
         {
           role: 'user',
@@ -88,13 +88,14 @@ export class CodingAgent {
         },
       ];
 
-      // Call Bedrock
-      console.log('Calling Claude Sonnet 4.5...');
-      const response = await this.bedrockClient.invokeModel({
+      // Call Claude Code CLI
+      console.log('Calling Claude Code (programmatic)...');
+      const response = await this.claudeCodeClient.invokeModel({
         messages,
         system: systemPrompt,
         maxTokens: 8000,
         temperature: 0.3, // Lower temperature for more consistent code generation
+        allowedTools: ['Read'], // Only allow Read tool - we'll handle writes ourselves
       });
 
       if (!response.success) {
@@ -310,12 +311,12 @@ Remember: Your changes will be automatically tested and deployed. Generate high-
    */
   async test(): Promise<{ success: boolean; error?: string }> {
     try {
-      const testResult = await this.bedrockClient.testConnection();
+      const testResult = await this.claudeCodeClient.testConnection();
 
       if (!testResult.success) {
         return {
           success: false,
-          error: testResult.error || 'Bedrock connection test failed',
+          error: testResult.error || 'Claude Code connection test failed',
         };
       }
 

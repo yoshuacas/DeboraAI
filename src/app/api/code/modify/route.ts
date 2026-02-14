@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createCodingAgent } from '@/lib/agents/coding-agent';
-import { createFileManager } from '@/lib/code-modification/file-manager';
-import { createValidator } from '@/lib/code-modification/validator';
+import { createClaudeAgent } from '@/lib/agents/claude-agent';
 import { createGitManager } from '@/lib/code-modification/git-manager';
 import { createMigrationManager } from '@/lib/code-modification/migration-manager';
 import { runTests } from '@/lib/code-modification/test-runner';
@@ -9,23 +7,23 @@ import { runTests } from '@/lib/code-modification/test-runner';
 /**
  * POST /api/code/modify
  *
- * Main orchestrator endpoint for code modifications.
+ * Main orchestrator endpoint for code modifications using Claude Agent SDK.
  *
- * Flow:
+ * New Flow (Agent SDK):
  * 1. Receive user request
- * 2. Call Bedrock / Claude to generate code
- * 3. Validate generated code
- * 4. Apply changes to staging worktree
+ * 2. Call Claude Agent SDK - Claude directly modifies files in staging
+ * 3. Check git status for modified files
+ * 4. Handle database migrations if schema changed
  * 5. Create git commit
  * 6. Run automated tests
- * 7. (Optional) Restart staging server
- * 8. Return results with SSE notification
+ * 7. Return results
  *
  * Request body:
  * {
  *   "message": "User request in natural language",
  *   "conversationHistory": [...], // Optional
  *   "skipTests": false // Optional - for testing only
+ *   "sessionId": "session_abc123" // Optional - to continue conversation
  * }
  */
 export async function POST(request: NextRequest) {
@@ -34,7 +32,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request
     const body = await request.json();
-    const { message, conversationHistory, skipTests = false } = body;
+    const { message, conversationHistory, skipTests = false, sessionId } = body;
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(
@@ -44,101 +42,88 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('='.repeat(80));
-    console.log('CODE MODIFICATION REQUEST');
+    console.log('CODE MODIFICATION REQUEST (Agent SDK)');
     console.log('='.repeat(80));
     console.log('User request:', message);
+    if (sessionId) {
+      console.log('Session ID:', sessionId);
+    }
     console.log('-'.repeat(80));
 
     // Step 1: Initialize services
-    console.log('\n[Step 1/7] Initializing services...');
+    console.log('\n[Step 1/5] Initializing services...');
     const projectRoot = process.cwd();
-    const codingAgent = createCodingAgent(projectRoot);
-    const fileManager = createFileManager(projectRoot);
-    const validator = createValidator(projectRoot);
+    const claudeAgent = createClaudeAgent(projectRoot);
     const gitManager = createGitManager(projectRoot);
     const migrationManager = createMigrationManager(projectRoot);
-
-    await codingAgent.initialize();
     console.log('✓ Services initialized');
 
-    // Step 2: Generate code with AI
-    console.log('\n[Step 2/7] Generating code with Claude Sonnet 4.5...');
-    const generationResult = await codingAgent.generateCode({
+    // Get initial git status to track changes
+    const initialStatus = await gitManager.getStatus();
+    const initialFiles = new Set([
+      ...initialStatus.data.modified,
+      ...initialStatus.data.created,
+    ]);
+
+    // Step 2: Claude Agent SDK modifies files directly
+    console.log('\n[Step 2/5] Claude Agent modifying files...');
+    const modificationResult = await claudeAgent.modifyCode({
       userRequest: message,
       conversationHistory,
+      sessionId,
     });
 
-    if (!generationResult.success) {
+    if (!modificationResult.success) {
       return NextResponse.json(
         {
           success: false,
-          error: generationResult.error || 'Code generation failed',
+          error: modificationResult.error || 'Code modification failed',
         },
         { status: 500 }
       );
     }
 
-    console.log(`✓ Generated ${generationResult.modifications.length} file modification(s)`);
-    console.log('Thinking:', generationResult.thinking);
-    console.log('Files to modify:');
-    generationResult.modifications.forEach((mod) => {
-      console.log(`  - ${mod.filePath}`);
-    });
+    console.log('✓ Claude Agent completed');
+    console.log('Result:', modificationResult.result);
 
-    // Step 3: Validate generated code
-    console.log('\n[Step 3/7] Validating generated code...');
-    const validationResult = await validator.validateFiles(
-      generationResult.modifications.map((mod) => ({
-        filePath: mod.filePath,
-        content: mod.content,
-      }))
-    );
+    // Get final git status to see what changed
+    const finalStatus = await gitManager.getStatus();
+    const modifiedFiles = [
+      ...finalStatus.data.modified.filter((f) => !initialFiles.has(f)),
+      ...finalStatus.data.created.filter((f) => !initialFiles.has(f)),
+      ...(modificationResult.filesModified || []),
+    ];
 
-    if (!validationResult.valid) {
-      console.error('✗ Validation failed:', validationResult.errors);
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Generated code failed validation',
-          details: validationResult.errors,
-        },
-        { status: 400 }
-      );
+    // Remove duplicates
+    const uniqueModifiedFiles = Array.from(new Set(modifiedFiles));
+
+    if (uniqueModifiedFiles.length === 0) {
+      console.log('⚠ No files were modified');
+    } else {
+      console.log('Files modified:');
+      uniqueModifiedFiles.forEach((file) => {
+        console.log(`  - ${file}`);
+      });
     }
 
-    console.log('✓ All generated code is valid');
-
-    // Step 4: Apply changes to staging worktree
-    console.log('\n[Step 4/7] Applying changes to files...');
-    const applyResult = await fileManager.applyModifications(generationResult.modifications);
-
-    if (!applyResult.success) {
-      console.error('✗ Failed to apply modifications:', applyResult.error);
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Failed to apply modifications',
-          details: applyResult.error,
-        },
-        { status: 500 }
-      );
-    }
-
-    console.log(`✓ Successfully modified ${applyResult.results.length} file(s)`);
-
-    // Step 4b: Handle database migrations if schema was modified
-    const schemaModified = generationResult.modifications.some(
-      (mod) => mod.filePath.includes('schema.prisma')
+    // Step 3: Handle database migrations if schema changed
+    const schemaModified = uniqueModifiedFiles.some((f) =>
+      f.includes('schema.prisma')
     );
 
     if (schemaModified) {
-      console.log('\n[Step 4b] Database schema modified - generating migration...');
+      console.log('\n[Step 3/5] Database schema modified - generating migration...');
       const migrationResult = await migrationManager.handleSchemaChange(
         `ai_generated_${Date.now()}`
       );
 
       if (!migrationResult.success) {
         console.error('✗ Migration failed:', migrationResult.error);
+
+        // Rollback file changes
+        console.log('Rolling back file changes...');
+        await gitManager.discardChanges();
+
         return NextResponse.json(
           {
             success: false,
@@ -150,39 +135,55 @@ export async function POST(request: NextRequest) {
       }
 
       console.log('✓ Database migration successful');
+    } else {
+      console.log('\n[Step 3/5] No database schema changes');
     }
 
-    // Step 5: Create git commit
-    console.log('\n[Step 5/7] Creating git commit...');
-    const commitMessage = `AI: ${message}\n\n${generationResult.explanation}\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>`;
+    // Step 4: Create git commit
+    console.log('\n[Step 4/5] Creating git commit...');
 
-    const commitResult = await gitManager.commit({
-      message: commitMessage,
-      files: generationResult.modifications.map((mod) => mod.filePath),
-      author: {
-        name: 'DeboraAI Agent',
-        email: 'agent@deboraai.local',
-      },
-    });
+    // Check if there are actually changes to commit
+    const statusBeforeCommit = await gitManager.getStatus();
+    const hasChanges =
+      statusBeforeCommit.data.modified.length > 0 ||
+      statusBeforeCommit.data.created.length > 0 ||
+      statusBeforeCommit.data.deleted.length > 0;
 
-    if (!commitResult.success) {
-      console.error('✗ Git commit failed:', commitResult.error);
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Failed to commit changes',
-          details: commitResult.error,
+    let commitResult;
+    if (hasChanges) {
+      const commitMessage = `AI: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}\n\n${modificationResult.result}\n\nCo-Authored-By: Claude Agent SDK <noreply@anthropic.com>`;
+
+      commitResult = await gitManager.commit({
+        message: commitMessage,
+        files: uniqueModifiedFiles.length > 0 ? uniqueModifiedFiles : undefined,
+        author: {
+          name: 'DeboraAI Agent',
+          email: 'agent@deboraai.local',
         },
-        { status: 500 }
-      );
+      });
+
+      if (!commitResult.success) {
+        console.error('✗ Git commit failed:', commitResult.error);
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Failed to commit changes',
+            details: commitResult.error,
+          },
+          { status: 500 }
+        );
+      }
+
+      console.log(`✓ Committed as: ${commitResult.data?.commit}`);
+    } else {
+      console.log('⚠ No changes to commit');
+      commitResult = { success: true, data: { commit: null } };
     }
 
-    console.log(`✓ Committed as: ${commitResult.data?.commit}`);
-
-    // Step 6: Run automated tests (unless skipped)
+    // Step 5: Run automated tests (unless skipped)
     let testResults = null;
     if (!skipTests) {
-      console.log('\n[Step 6/7] Running automated tests...');
+      console.log('\n[Step 5/5] Running automated tests...');
 
       try {
         testResults = await runTests({
@@ -196,9 +197,11 @@ export async function POST(request: NextRequest) {
           console.error('✗ Tests failed!');
           console.error(`Failed: ${testResults.testsFailed}/${testResults.totalTests}`);
 
-          // Rollback changes
-          console.log('Rolling back changes...');
-          await gitManager.revertCommit(commitResult.data.commit);
+          // Rollback changes if we made a commit
+          if (commitResult.data.commit) {
+            console.log('Rolling back commit...');
+            await gitManager.revertCommit(commitResult.data.commit);
+          }
 
           return NextResponse.json(
             {
@@ -221,12 +224,12 @@ export async function POST(request: NextRequest) {
         // Continue anyway - tests might have issues
       }
     } else {
-      console.log('\n[Step 6/7] Skipping tests (skipTests=true)');
+      console.log('\n[Step 5/5] Skipping tests (skipTests=true)');
     }
 
-    // Step 7: Success!
+    // Success!
     const duration = Date.now() - startTime;
-    console.log('\n[Step 7/7] Code modification complete!');
+    console.log('\n✓ Code modification complete!');
     console.log(`Total time: ${(duration / 1000).toFixed(2)}s`);
     console.log('='.repeat(80));
 
@@ -234,16 +237,17 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Code modifications applied successfully',
       data: {
-        modifications: generationResult.modifications.map((mod) => ({
-          filePath: mod.filePath,
-          created: mod.createIfMissing,
+        result: modificationResult.result,
+        sessionId: modificationResult.sessionId,
+        modifications: uniqueModifiedFiles.map((file) => ({
+          filePath: file,
+          created: finalStatus.data.created.includes(file),
         })),
-        explanation: generationResult.explanation,
-        thinking: generationResult.thinking,
-        warnings: generationResult.warnings,
         commit: {
           hash: commitResult.data?.commit,
-          message: commitMessage,
+          message: commitResult.data?.commit
+            ? `AI: ${message.substring(0, 100)}...`
+            : null,
         },
         tests: testResults
           ? {
