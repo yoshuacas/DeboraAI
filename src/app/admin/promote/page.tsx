@@ -129,7 +129,11 @@ export default function PromotionPage() {
         // Reload data to show updated state
         setTimeout(() => loadData(), 1000);
       } else {
-        setError(data.error || 'Promotion failed');
+        // Show detailed error message
+        const errorMessage = data.error || 'Promotion failed';
+        const errorDetails = data.details ? `\n\nDetails: ${data.details}` : '';
+        setError(errorMessage + errorDetails);
+        console.error('Promotion failed:', data);
       }
     } catch (err) {
       setError('Failed to promote staging to production');

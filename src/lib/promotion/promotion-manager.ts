@@ -246,35 +246,33 @@ export class PromotionManager {
       console.log(`  - ${diff.files.length} file(s) changed`);
       console.log('✓ Changes analyzed');
 
-      // Step 3: Merge staging into production (in staging worktree)
-      console.log('\n[Step 3/5] Merging staging into main branch...');
+      // Step 3: Push staging to origin (if not already)
+      console.log('\n[Step 3/5] Ensuring staging is pushed to origin...');
+      await execAsync('git push origin staging', { cwd: this.stagingPath });
+      console.log('✓ Staging pushed to origin');
 
-      // Switch to main branch temporarily in staging to perform merge
-      await execAsync('git checkout main', { cwd: this.stagingPath });
+      // Step 4: Merge staging into main (from production worktree)
+      console.log('\n[Step 4/5] Merging staging into main branch...');
 
       try {
-        // Merge staging into main (fast-forward or merge commit)
+        // In production worktree, merge origin/staging into main
         const mergeMessage = options.message ||
           `Promote staging to production\n\nPerformed by: ${options.performedBy}\nDate: ${new Date().toISOString()}\n\nCommits included: ${diff.commits.length}\nFiles changed: ${diff.files.length}`;
 
-        await execAsync(`git merge staging -m "${mergeMessage}"`, {
-          cwd: this.stagingPath,
+        // Fetch latest from origin
+        await execAsync('git fetch origin', { cwd: this.productionPath });
+
+        // Merge origin/staging into current main branch
+        await execAsync(`git merge origin/staging --no-ff -m "${mergeMessage}"`, {
+          cwd: this.productionPath,
         });
 
         console.log('✓ Merge completed');
 
-        // Step 4: Push to remote main
-        console.log('\n[Step 4/5] Pushing to production branch...');
-        await execAsync('git push origin main', { cwd: this.stagingPath });
+        // Step 5: Push to remote main
+        console.log('\n[Step 5/5] Pushing to production branch...');
+        await execAsync('git push origin main', { cwd: this.productionPath });
         console.log('✓ Pushed to origin/main');
-
-        // Step 5: Update production worktree
-        console.log('\n[Step 5/5] Updating production worktree...');
-        await execAsync('git pull origin main', { cwd: this.productionPath });
-        console.log('✓ Production worktree updated');
-
-        // Switch back to staging branch
-        await execAsync('git checkout staging', { cwd: this.stagingPath });
 
         // Success!
         const duration = Date.now() - startTime;
@@ -293,11 +291,10 @@ export class PromotionManager {
           },
         };
       } catch (mergeError) {
-        // Rollback: abort merge and switch back to staging
+        // Rollback: abort merge in production worktree
         console.error('✗ Merge failed, rolling back...');
         try {
-          await execAsync('git merge --abort', { cwd: this.stagingPath });
-          await execAsync('git checkout staging', { cwd: this.stagingPath });
+          await execAsync('git merge --abort', { cwd: this.productionPath });
         } catch (rollbackError) {
           console.error('✗ Rollback failed - manual intervention required!');
         }
