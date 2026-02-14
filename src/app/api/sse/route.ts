@@ -19,11 +19,15 @@ export async function GET(request: NextRequest) {
   // Get optional sessionId from query params
   const sessionId = request.nextUrl.searchParams.get('sessionId') || undefined;
 
+  console.log('[SSE Endpoint] New connection with sessionId:', sessionId);
+
   // Create a ReadableStream for SSE
   const stream = new ReadableStream({
     start(controller) {
       // Generate unique client ID
       const clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      console.log('[SSE Endpoint] Registering client:', clientId, 'with sessionId:', sessionId);
 
       // Register this client with the broadcast manager
       sseManager.registerClient({

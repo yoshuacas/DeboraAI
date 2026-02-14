@@ -29,7 +29,7 @@ class SSEBroadcastManager {
    */
   registerClient(client: SSEClient): void {
     this.clients.set(client.id, client);
-    console.log(`[SSE] Client registered: ${client.id} (Total: ${this.clients.size})`);
+    console.log(`[SSE] Client registered: ${client.id} with sessionId: ${client.sessionId || 'none'} (Total: ${this.clients.size})`);
   }
 
   /**

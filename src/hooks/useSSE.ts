@@ -65,6 +65,8 @@ export function useSSE(options: UseSSEOptions = {}) {
       ? `/api/sse?sessionId=${encodeURIComponent(sessionId)}`
       : '/api/sse';
 
+    console.log('[SSE] Connecting to:', url, 'with sessionId:', sessionId);
+
     try {
       const eventSource = new EventSource(url);
       eventSourceRef.current = eventSource;
