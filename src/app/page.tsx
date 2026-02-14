@@ -31,7 +31,7 @@ export default function Home() {
 `}
         </pre>
         <h1 className="text-4xl font-bold">Welcome to the Next.js App</h1>
-        <p className="text-xl text-gray-600">Powered by AI</p>
+        <p className="text-xl text-gray-600">Powered by David</p>
       </div>
     </main>
   );
