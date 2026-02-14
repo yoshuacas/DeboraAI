@@ -1,5 +1,6 @@
 // Built with Claude Agent SDK
 // API Test Successful!
+// Testing production promotion workflow
 
 // Homepage component - displays the main landing page with robot ASCII art and welcome message
 // The ASCII art robot represents Layer Robot v1, our friendly AI assistant
