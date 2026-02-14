@@ -170,7 +170,9 @@ ${contextStr}
 
 ## YOUR ROLE
 
-You will receive requests to modify the codebase. Use your tools (Read, Edit, Write, Bash) to implement the requested changes directly. All changes are in staging and version-controlled, so you can work confidently.
+You will receive requests from administrators to modify the codebase. Use your tools (Read, Edit, Write, Bash) to implement the requested changes directly. All changes are in staging and version-controlled, so you can work confidently.
+
+**IMPORTANT:** Follow the administrator conventions and terminology shown in the codebase context above. When administrators use terms like "admin interface", "staging", or refer to specific pages like "/admin/code", they are using the conventions documented in docs/ADMIN_GUIDE.md. If you're unsure about terminology, read that file for clarification.
 
 ## CRITICAL SAFETY RULES
 

@@ -15,6 +15,7 @@ export interface CodebaseContext {
   protectedFiles: string[];
   sensitiveFiles: string[];
   summary: string;
+  documentation: Documentation;
 }
 
 /**
@@ -66,6 +67,14 @@ export interface RecentChange {
 }
 
 /**
+ * Documentation information
+ */
+export interface Documentation {
+  adminGuide: string | null;
+  conventions: string[];
+}
+
+/**
  * CodebaseContextBuilder
  *
  * Scans the entire codebase and creates comprehensive context for the AI agent.
@@ -95,11 +104,12 @@ export class CodebaseContextBuilder {
   async build(): Promise<CodebaseContext> {
     console.log('Building codebase context...');
 
-    const [structure, dependencies, schema, recentChanges] = await Promise.all([
+    const [structure, dependencies, schema, recentChanges, documentation] = await Promise.all([
       this.scanStructure(),
       this.getDependencies(),
       this.getDatabaseSchema(),
       this.getRecentChanges(),
+      this.getDocumentation(),
     ]);
 
     const protectedFiles = getProtectedPatterns();
@@ -116,6 +126,7 @@ export class CodebaseContextBuilder {
       protectedFiles,
       sensitiveFiles,
       summary,
+      documentation,
     };
   }
 
@@ -253,6 +264,71 @@ export class CodebaseContextBuilder {
   }
 
   /**
+   * Get documentation and extract key conventions
+   */
+  private async getDocumentation(): Promise<Documentation> {
+    try {
+      const adminGuidePath = path.join(this.projectRoot, 'docs/ADMIN_GUIDE.md');
+      const adminGuide = await fs.readFile(adminGuidePath, 'utf-8');
+
+      // Extract key conventions from the admin guide
+      const conventions = this.extractConventions(adminGuide);
+
+      return {
+        adminGuide,
+        conventions,
+      };
+    } catch (error) {
+      // Documentation doesn't exist yet or can't be read
+      return {
+        adminGuide: null,
+        conventions: [],
+      };
+    }
+  }
+
+  /**
+   * Extract key conventions from admin guide for quick reference
+   */
+  private extractConventions(adminGuide: string): string[] {
+    const conventions: string[] = [];
+
+    // Extract terminology section
+    if (adminGuide.includes('### Key Concepts')) {
+      conventions.push('TERMINOLOGY:');
+      conventions.push('- Staging Environment: Where AI makes changes (safe sandbox)');
+      conventions.push('- Production Environment: Live application (AI cannot access yet)');
+      conventions.push('- Admin Interface: Web-based chat UI at /admin/code');
+      conventions.push('- Test-Driven Deployment: All changes are tested; failures = automatic rollback');
+    }
+
+    // Extract directory conventions
+    if (adminGuide.includes('### Directory Structure')) {
+      conventions.push('\nDIRECTORY CONVENTIONS:');
+      conventions.push('- Pages: src/app/*/page.tsx');
+      conventions.push('- API Routes: src/app/api/*/route.ts');
+      conventions.push('- Components: src/components/ (PascalCase.tsx)');
+      conventions.push('- Libraries: src/lib/ (kebab-case.ts)');
+      conventions.push('- Tests: tests/unit/ or tests/integration/');
+    }
+
+    // Extract status indicators
+    conventions.push('\nSTATUS INDICATORS:');
+    conventions.push('- • file.tsx = File modified');
+    conventions.push('- + file.tsx = File created (new)');
+    conventions.push('- ✓ X/Y passed = Tests passed');
+    conventions.push('- ✗ X/Y failed = Tests failed (changes rolled back)');
+
+    // Extract admin pages
+    conventions.push('\nADMIN PAGES:');
+    conventions.push('- /admin/code = AI modification interface (main chat)');
+    conventions.push('- /admin/history = View all code changes and commits');
+    conventions.push('- / = Homepage (staging preview)');
+
+    return conventions;
+  }
+
+  /**
    * Generate human-readable summary
    */
   private generateSummary(
@@ -377,6 +453,14 @@ export function formatContextForAgent(context: CodebaseContext): string {
   if (topLevelDirs.length > 0) {
     lines.push('\n## Top-Level Directories');
     topLevelDirs.forEach((dir) => lines.push(`- ${dir}/`));
+  }
+
+  // Conventions and terminology (quick reference)
+  if (context.documentation.conventions.length > 0) {
+    lines.push('\n## Administrator Conventions & Terminology');
+    lines.push('These are the conventions and terms administrators use:');
+    context.documentation.conventions.forEach((convention) => lines.push(convention));
+    lines.push('\nFull admin guide available at: docs/ADMIN_GUIDE.md (use Read tool if you need details)');
   }
 
   lines.push('\n=== END CODEBASE CONTEXT ===\n');
