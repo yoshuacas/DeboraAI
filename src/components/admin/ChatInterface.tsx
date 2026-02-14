@@ -77,7 +77,7 @@ export default function ChatInterface() {
         case 'status':
           // Show status updates as system messages
           const statusMessage: Message = {
-            id: `sse_${sseMessage.timestamp}`,
+            id: `sse_status_${sseMessage.timestamp}_${Math.random().toString(36).substr(2, 9)}`,
             role: 'progress',
             content: `${sseMessage.data.status}${sseMessage.data.details ? `: ${JSON.stringify(sseMessage.data.details)}` : ''}`,
             timestamp: new Date(sseMessage.timestamp),
@@ -88,7 +88,7 @@ export default function ChatInterface() {
         case 'file_change':
           // Show file changes
           const fileMessage: Message = {
-            id: `sse_${sseMessage.timestamp}`,
+            id: `sse_file_${sseMessage.timestamp}_${Math.random().toString(36).substr(2, 9)}`,
             role: 'progress',
             content: `File ${sseMessage.data.action}: ${sseMessage.data.filePath}`,
             timestamp: new Date(sseMessage.timestamp),
@@ -99,7 +99,7 @@ export default function ChatInterface() {
         case 'test_result':
           // Show test results
           const testMessage: Message = {
-            id: `sse_${sseMessage.timestamp}`,
+            id: `sse_test_${sseMessage.timestamp}_${Math.random().toString(36).substr(2, 9)}`,
             role: 'progress',
             content: `Tests: ${sseMessage.data.passed}/${sseMessage.data.total} passed`,
             timestamp: new Date(sseMessage.timestamp),
@@ -111,7 +111,7 @@ export default function ChatInterface() {
         case 'error':
           // Show errors
           const errorMessage: Message = {
-            id: `sse_${sseMessage.timestamp}`,
+            id: `sse_error_${sseMessage.timestamp}_${Math.random().toString(36).substr(2, 9)}`,
             role: 'system',
             content: sseMessage.data.error,
             timestamp: new Date(sseMessage.timestamp),
