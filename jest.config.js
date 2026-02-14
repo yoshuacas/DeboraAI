@@ -55,6 +55,7 @@ const customJestConfig = {
     '<rootDir>/node_modules/',
     '<rootDir>/coverage/',
     '<rootDir>/dist/',
+    '<rootDir>/tests/e2e/', // Skip E2E tests - run with npm run test:e2e
   ],
 
   // Transform ignore patterns

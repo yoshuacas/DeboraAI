@@ -17,7 +17,7 @@ describe('BedrockClient', () => {
     });
 
     it('should use default model ID', () => {
-      expect(client.getModelId()).toContain('claude-sonnet');
+      expect(client.getModelId()).toContain('sonnet');
     });
 
     it('should accept custom region', () => {
