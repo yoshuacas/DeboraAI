@@ -109,9 +109,20 @@ class SSEBroadcastManager {
 }
 
 /**
- * Singleton instance
+ * Singleton instance - use global to ensure single instance across Next.js contexts
+ * In Next.js dev mode, different API routes can run in different contexts,
+ * so we need to use the Node.js global object to share state.
  */
-export const sseManager = new SSEBroadcastManager();
+declare global {
+  var sseManager: SSEBroadcastManager | undefined;
+}
+
+export const sseManager = global.sseManager || new SSEBroadcastManager();
+
+// Store in global for reuse across contexts
+if (!global.sseManager) {
+  global.sseManager = sseManager;
+}
 
 /**
  * Helper functions for common message types
