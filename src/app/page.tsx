@@ -4,6 +4,7 @@
 
 // Homepage component - displays the main landing page with robot ASCII art and welcome message
 // The ASCII art robot represents Layer Robot v1, our friendly AI assistant
+// This is the main entry point for visitors to the application
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
