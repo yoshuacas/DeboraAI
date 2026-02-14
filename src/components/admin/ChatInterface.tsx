@@ -31,10 +31,13 @@ export default function ChatInterface() {
   const [progressMessage, setProgressMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Generate a sessionId on mount for SSE connection
+  // Generate a sessionId on mount for SSE connection (client-side only)
   const [sessionId] = useState<string>(() => {
     return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   });
+
+  // Track Agent SDK sessionId separately for conversation continuity
+  const [agentSessionId, setAgentSessionId] = useState<string | undefined>();
 
   // SSE connection for real-time updates
   const { messages: sseMessages, isConnected, error: sseError } = useSSE({
@@ -156,7 +159,8 @@ export default function ChatInterface() {
         body: JSON.stringify({
           message: input,
           conversationHistory,
-          sessionId,
+          sessionId, // Client sessionId for SSE filtering
+          agentSessionId, // Agent SDK sessionId for conversation continuity
           skipTests: false, // Always run tests for admin requests
         }),
       });
@@ -177,7 +181,11 @@ export default function ChatInterface() {
         };
 
         setMessages((prev) => [...prev, assistantMessage]);
-        // Note: We keep using our client-generated sessionId for SSE consistency
+
+        // Update agent sessionId for conversation continuity
+        if (data.data.agentSessionId) {
+          setAgentSessionId(data.data.agentSessionId);
+        }
       } else {
         // Error response
         const errorMessage: Message = {
@@ -220,8 +228,8 @@ export default function ChatInterface() {
    */
   const handleClearConversation = () => {
     setMessages([]);
-    // Note: sessionId stays the same for SSE connection continuity
-    // If you want a fresh session, reload the page
+    setAgentSessionId(undefined); // Clear agent session to start fresh conversation
+    // Note: client sessionId stays the same for SSE connection continuity
   };
 
   return (

@@ -37,12 +37,14 @@ import {
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   let sessionId: string | undefined;
+  let agentSessionId: string | undefined;
 
   try {
     // Parse request
     const body = await request.json();
     const { message, conversationHistory, skipTests = false } = body;
-    sessionId = body.sessionId;
+    sessionId = body.sessionId; // Client sessionId for SSE filtering
+    agentSessionId = body.agentSessionId; // Agent SDK sessionId for conversation continuity
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
     const modificationResult = await claudeAgent.modifyCode({
       userRequest: message,
       conversationHistory,
-      sessionId,
+      sessionId: agentSessionId, // Use agent sessionId for resuming, not client sessionId
     });
 
     if (!modificationResult.success) {
@@ -285,7 +287,7 @@ export async function POST(request: NextRequest) {
       message: 'Code modifications applied successfully',
       data: {
         result: modificationResult.result,
-        sessionId: modificationResult.sessionId,
+        agentSessionId: modificationResult.sessionId, // Agent SDK session for continuity
         modifications: uniqueModifiedFiles.map((file) => ({
           filePath: file,
           created: finalStatus.data.created.includes(file),
