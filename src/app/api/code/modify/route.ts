@@ -201,6 +201,20 @@ export async function POST(request: NextRequest) {
 
       console.log(`✓ Committed as: ${commitResult.data?.commit}`);
       broadcastStatus('commit_created', { step: '4/5', commit: commitResult.data?.commit }, sessionId);
+
+      // Push to remote staging branch
+      console.log('Pushing to origin/staging...');
+      broadcastProgress('Pushing to GitHub...', sessionId);
+
+      try {
+        await gitManager.push({ remote: 'origin', branch: 'staging' });
+        console.log('✓ Pushed to origin/staging');
+        broadcastStatus('pushed_to_remote', { step: '4/5' }, sessionId);
+      } catch (pushError) {
+        console.error('✗ Failed to push to remote:', pushError);
+        // Don't fail the entire operation if push fails - admin can push manually
+        console.warn('⚠ Continuing despite push failure - changes are committed locally');
+      }
     } else {
       console.log('⚠ No changes to commit');
       broadcastStatus('no_changes_to_commit', { step: '4/5' }, sessionId);

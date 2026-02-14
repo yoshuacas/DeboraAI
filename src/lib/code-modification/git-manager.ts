@@ -410,6 +410,30 @@ export class GitManager {
       };
     }
   }
+
+  /**
+   * Push commits to remote repository
+   */
+  async push(options: { remote?: string; branch?: string } = {}): Promise<GitOperationResult> {
+    const remote = options.remote || 'origin';
+    const branch = options.branch || 'staging';
+
+    try {
+      await this.git.push(remote, branch);
+
+      return {
+        success: true,
+        operation: 'push',
+        message: `Successfully pushed to ${remote}/${branch}`,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        operation: 'push',
+        error: `Failed to push: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  }
 }
 
 /**
