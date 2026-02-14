@@ -80,6 +80,8 @@ export function useSSE(options: UseSSEOptions = {}) {
         try {
           const message: SSEMessage = JSON.parse(event.data);
 
+          console.log('[SSE] Received message:', message.type, message);
+
           // Skip heartbeat messages
           if (message.type === 'heartbeat') {
             return;

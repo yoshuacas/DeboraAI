@@ -49,11 +49,14 @@ class SSEBroadcastManager {
       timestamp: message.timestamp || Date.now(),
     });
 
+    console.log(`[SSE Broadcast] Type: ${message.type}, SessionId: ${message.sessionId || 'none'}, Total clients: ${this.clients.size}`);
+
     let sent = 0;
     for (const [clientId, client] of this.clients.entries()) {
       try {
         // If message has sessionId, only send to matching clients
         if (message.sessionId && client.sessionId !== message.sessionId) {
+          console.log(`[SSE] Skipping client ${clientId}: sessionId mismatch (message: ${message.sessionId}, client: ${client.sessionId})`);
           continue;
         }
 
@@ -69,6 +72,8 @@ class SSEBroadcastManager {
 
     if (sent > 0) {
       console.log(`[SSE] Broadcast ${message.type} to ${sent} client(s)`);
+    } else {
+      console.warn(`[SSE] No clients received message type: ${message.type}`);
     }
   }
 
