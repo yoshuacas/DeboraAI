@@ -23,21 +23,29 @@ export interface SSEMessage {
  */
 class SSEBroadcastManager {
   private clients: Map<string, SSEClient> = new Map();
+  private instanceId: string;
+
+  constructor() {
+    this.instanceId = `manager_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`[SSE] New SSEBroadcastManager instance created: ${this.instanceId}`);
+  }
 
   /**
    * Register a new SSE client
    */
   registerClient(client: SSEClient): void {
     this.clients.set(client.id, client);
-    console.log(`[SSE] Client registered: ${client.id} with sessionId: ${client.sessionId || 'none'} (Total: ${this.clients.size})`);
+    console.log(`[SSE ${this.instanceId}] Client registered: ${client.id} with sessionId: ${client.sessionId || 'none'} (Total: ${this.clients.size})`);
   }
 
   /**
    * Unregister an SSE client
    */
   unregisterClient(clientId: string): void {
+    const existed = this.clients.has(clientId);
     this.clients.delete(clientId);
-    console.log(`[SSE] Client unregistered: ${clientId} (Total: ${this.clients.size})`);
+    console.log(`[SSE] Client unregistered: ${clientId} (existed: ${existed}) (Total: ${this.clients.size})`);
+    console.trace('[SSE] Unregister trace');
   }
 
   /**
@@ -49,7 +57,8 @@ class SSEBroadcastManager {
       timestamp: message.timestamp || Date.now(),
     });
 
-    console.log(`[SSE Broadcast] Type: ${message.type}, SessionId: ${message.sessionId || 'none'}, Total clients: ${this.clients.size}`);
+    console.log(`[SSE Broadcast ${this.instanceId}] Type: ${message.type}, SessionId: ${message.sessionId || 'none'}, Total clients: ${this.clients.size}`);
+    console.log(`[SSE Broadcast ${this.instanceId}] Registered client IDs:`, Array.from(this.clients.keys()));
 
     let sent = 0;
     for (const [clientId, client] of this.clients.entries()) {
