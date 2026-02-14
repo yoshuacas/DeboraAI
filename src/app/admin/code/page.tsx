@@ -66,7 +66,7 @@ export default function AdminCodePage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <a
             href="/admin/history"
             className="block p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
@@ -74,6 +74,16 @@ export default function AdminCodePage() {
             <h3 className="font-medium text-gray-900">Change History</h3>
             <p className="mt-1 text-sm text-gray-600">
               View all past code modifications and commits
+            </p>
+          </a>
+
+          <a
+            href="/admin/promote"
+            className="block p-4 bg-white border border-green-200 rounded-lg hover:shadow-md transition-shadow bg-green-50"
+          >
+            <h3 className="font-medium text-green-900">Promote to Production</h3>
+            <p className="mt-1 text-sm text-green-700">
+              Deploy tested staging changes to live site
             </p>
           </a>
 
