@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useSSE, SSEMessage } from '@/hooks/useSSE';
 
 /**
  * Message in the conversation
  */
 interface Message {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant' | 'system' | 'progress';
   content: string;
   timestamp: Date;
   modifications?: Array<{ filePath: string; created: boolean }>;
@@ -28,12 +29,84 @@ export default function ChatInterface() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>();
+  const [progressMessage, setProgressMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // SSE connection for real-time updates
+  const { messages: sseMessages, isConnected, error: sseError } = useSSE({
+    sessionId,
+    autoConnect: true,
+  });
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Handle SSE messages for real-time progress updates
+  useEffect(() => {
+    if (sseMessages.length === 0) return;
+
+    const latestMessage = sseMessages[sseMessages.length - 1];
+
+    switch (latestMessage.type) {
+      case 'progress':
+        // Update progress indicator
+        setProgressMessage(latestMessage.data.message);
+        break;
+
+      case 'status':
+        // Show status updates as system messages
+        const statusMessage: Message = {
+          id: `sse_${latestMessage.timestamp}`,
+          role: 'progress',
+          content: `${latestMessage.data.status}${latestMessage.data.details ? `: ${JSON.stringify(latestMessage.data.details)}` : ''}`,
+          timestamp: new Date(latestMessage.timestamp),
+        };
+        setMessages((prev) => [...prev, statusMessage]);
+        break;
+
+      case 'file_change':
+        // Show file changes
+        const fileMessage: Message = {
+          id: `sse_${latestMessage.timestamp}`,
+          role: 'progress',
+          content: `File ${latestMessage.data.action}: ${latestMessage.data.filePath}`,
+          timestamp: new Date(latestMessage.timestamp),
+        };
+        setMessages((prev) => [...prev, fileMessage]);
+        break;
+
+      case 'test_result':
+        // Show test results
+        const testMessage: Message = {
+          id: `sse_${latestMessage.timestamp}`,
+          role: 'progress',
+          content: `Tests: ${latestMessage.data.passed}/${latestMessage.data.total} passed`,
+          timestamp: new Date(latestMessage.timestamp),
+          tests: latestMessage.data,
+        };
+        setMessages((prev) => [...prev, testMessage]);
+        break;
+
+      case 'error':
+        // Show errors
+        const errorMessage: Message = {
+          id: `sse_${latestMessage.timestamp}`,
+          role: 'system',
+          content: latestMessage.data.error,
+          timestamp: new Date(latestMessage.timestamp),
+          error: latestMessage.data.error,
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        break;
+
+      case 'complete':
+        // Clear progress when complete
+        setProgressMessage(null);
+        break;
+    }
+  }, [sseMessages]);
 
   /**
    * Send message to AI agent
@@ -186,6 +259,8 @@ export default function ChatInterface() {
                   ? 'bg-blue-600 text-white'
                   : message.role === 'system'
                   ? 'bg-red-50 text-red-900 border border-red-200'
+                  : message.role === 'progress'
+                  ? 'bg-blue-50 text-blue-900 border border-blue-200 text-sm'
                   : 'bg-gray-100 text-gray-900'
               }`}
             >
@@ -250,13 +325,15 @@ export default function ChatInterface() {
           </div>
         ))}
 
-        {/* Loading indicator */}
+        {/* Loading indicator with progress */}
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-gray-100 rounded-lg p-4">
               <div className="flex items-center space-x-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                <span className="text-gray-600">AI agent is working...</span>
+                <span className="text-gray-600">
+                  {progressMessage || 'AI agent is working...'}
+                </span>
               </div>
             </div>
           </div>

@@ -3,6 +3,14 @@ import { createClaudeAgent } from '@/lib/agents/claude-agent';
 import { createGitManager } from '@/lib/code-modification/git-manager';
 import { createMigrationManager } from '@/lib/code-modification/migration-manager';
 import { runTests } from '@/lib/code-modification/test-runner';
+import {
+  broadcastProgress,
+  broadcastStatus,
+  broadcastFileChange,
+  broadcastTestResult,
+  broadcastError,
+  broadcastComplete,
+} from '@/lib/sse/broadcast';
 
 /**
  * POST /api/code/modify
@@ -28,11 +36,13 @@ import { runTests } from '@/lib/code-modification/test-runner';
  */
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
+  let sessionId: string | undefined;
 
   try {
     // Parse request
     const body = await request.json();
-    const { message, conversationHistory, skipTests = false, sessionId } = body;
+    const { message, conversationHistory, skipTests = false } = body;
+    sessionId = body.sessionId;
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(
@@ -52,11 +62,13 @@ export async function POST(request: NextRequest) {
 
     // Step 1: Initialize services
     console.log('\n[Step 1/5] Initializing services...');
+    broadcastProgress('Initializing services...', sessionId);
     const projectRoot = process.cwd();
     const claudeAgent = createClaudeAgent(projectRoot);
     const gitManager = createGitManager(projectRoot);
     const migrationManager = createMigrationManager(projectRoot);
     console.log('✓ Services initialized');
+    broadcastStatus('initialized', { step: '1/5' }, sessionId);
 
     // Get initial git status to track changes
     const initialStatus = await gitManager.getStatus();
@@ -67,6 +79,7 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Claude Agent SDK modifies files directly
     console.log('\n[Step 2/5] Claude Agent modifying files...');
+    broadcastProgress('Claude Agent is analyzing and modifying files...', sessionId);
     const modificationResult = await claudeAgent.modifyCode({
       userRequest: message,
       conversationHistory,
@@ -74,6 +87,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!modificationResult.success) {
+      broadcastError(modificationResult.error || 'Code modification failed', sessionId);
       return NextResponse.json(
         {
           success: false,
@@ -85,6 +99,7 @@ export async function POST(request: NextRequest) {
 
     console.log('✓ Claude Agent completed');
     console.log('Result:', modificationResult.result);
+    broadcastStatus('agent_completed', { step: '2/5' }, sessionId);
 
     // Get final git status to see what changed
     const finalStatus = await gitManager.getStatus();
@@ -103,6 +118,8 @@ export async function POST(request: NextRequest) {
       console.log('Files modified:');
       uniqueModifiedFiles.forEach((file) => {
         console.log(`  - ${file}`);
+        const action = finalStatus.data.created.includes(file) ? 'created' : 'modified';
+        broadcastFileChange(file, action, sessionId);
       });
     }
 
@@ -113,6 +130,7 @@ export async function POST(request: NextRequest) {
 
     if (schemaModified) {
       console.log('\n[Step 3/5] Database schema modified - generating migration...');
+      broadcastProgress('Generating database migration...', sessionId);
       const migrationResult = await migrationManager.handleSchemaChange(
         `ai_generated_${Date.now()}`
       );
@@ -122,6 +140,7 @@ export async function POST(request: NextRequest) {
 
         // Rollback file changes
         console.log('Rolling back file changes...');
+        broadcastError('Database migration failed - rolling back', sessionId);
         await gitManager.discardChanges();
 
         return NextResponse.json(
@@ -135,12 +154,15 @@ export async function POST(request: NextRequest) {
       }
 
       console.log('✓ Database migration successful');
+      broadcastStatus('migration_complete', { step: '3/5' }, sessionId);
     } else {
       console.log('\n[Step 3/5] No database schema changes');
+      broadcastStatus('no_migration_needed', { step: '3/5' }, sessionId);
     }
 
     // Step 4: Create git commit
     console.log('\n[Step 4/5] Creating git commit...');
+    broadcastProgress('Creating git commit...', sessionId);
 
     // Check if there are actually changes to commit
     const statusBeforeCommit = await gitManager.getStatus();
@@ -164,6 +186,7 @@ export async function POST(request: NextRequest) {
 
       if (!commitResult.success) {
         console.error('✗ Git commit failed:', commitResult.error);
+        broadcastError('Failed to commit changes', sessionId);
         return NextResponse.json(
           {
             success: false,
@@ -175,8 +198,10 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(`✓ Committed as: ${commitResult.data?.commit}`);
+      broadcastStatus('commit_created', { step: '4/5', commit: commitResult.data?.commit }, sessionId);
     } else {
       console.log('⚠ No changes to commit');
+      broadcastStatus('no_changes_to_commit', { step: '4/5' }, sessionId);
       commitResult = { success: true, data: { commit: null } };
     }
 
@@ -184,6 +209,7 @@ export async function POST(request: NextRequest) {
     let testResults = null;
     if (!skipTests) {
       console.log('\n[Step 5/5] Running automated tests...');
+      broadcastProgress('Running automated tests...', sessionId);
 
       try {
         testResults = await runTests({
@@ -197,9 +223,16 @@ export async function POST(request: NextRequest) {
           console.error('✗ Tests failed!');
           console.error(`Failed: ${testResults.testsFailed}/${testResults.totalTests}`);
 
+          broadcastTestResult({
+            passed: testResults.testsPassed,
+            failed: testResults.testsFailed,
+            total: testResults.totalTests,
+          }, sessionId);
+
           // Rollback changes if we made a commit
           if (commitResult.data.commit) {
             console.log('Rolling back commit...');
+            broadcastError('Tests failed - rolling back changes', sessionId);
             await gitManager.revertCommit(commitResult.data.commit);
           }
 
@@ -219,12 +252,19 @@ export async function POST(request: NextRequest) {
         }
 
         console.log(`✓ All tests passed (${testResults.testsPassed}/${testResults.totalTests})`);
+        broadcastTestResult({
+          passed: testResults.testsPassed,
+          failed: testResults.testsFailed,
+          total: testResults.totalTests,
+        }, sessionId);
       } catch (error) {
         console.error('✗ Test execution failed:', error);
+        broadcastError('Test execution failed', sessionId);
         // Continue anyway - tests might have issues
       }
     } else {
       console.log('\n[Step 5/5] Skipping tests (skipTests=true)');
+      broadcastStatus('tests_skipped', { step: '5/5' }, sessionId);
     }
 
     // Success!
@@ -232,6 +272,13 @@ export async function POST(request: NextRequest) {
     console.log('\n✓ Code modification complete!');
     console.log(`Total time: ${(duration / 1000).toFixed(2)}s`);
     console.log('='.repeat(80));
+
+    // Broadcast completion
+    broadcastComplete({
+      success: true,
+      modifications: uniqueModifiedFiles.length,
+      duration,
+    }, sessionId);
 
     return NextResponse.json({
       success: true,
@@ -262,6 +309,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('✗ Code modification failed:', error);
+
+    broadcastError(
+      error instanceof Error ? error.message : 'Internal server error',
+      sessionId
+    );
 
     return NextResponse.json(
       {
