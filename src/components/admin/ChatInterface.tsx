@@ -28,9 +28,13 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | undefined>();
   const [progressMessage, setProgressMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Generate a sessionId on mount for SSE connection
+  const [sessionId] = useState<string>(() => {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  });
 
   // SSE connection for real-time updates
   const { messages: sseMessages, isConnected, error: sseError } = useSSE({
@@ -43,69 +47,82 @@ export default function ChatInterface() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Track which SSE messages we've already processed
+  const processedMessageIds = useRef(new Set<string>());
+
   // Handle SSE messages for real-time progress updates
   useEffect(() => {
     if (sseMessages.length === 0) return;
 
-    const latestMessage = sseMessages[sseMessages.length - 1];
+    // Process only new messages
+    sseMessages.forEach((sseMessage) => {
+      const messageId = `${sseMessage.timestamp}_${sseMessage.type}`;
 
-    switch (latestMessage.type) {
-      case 'progress':
-        // Update progress indicator
-        setProgressMessage(latestMessage.data.message);
-        break;
+      if (processedMessageIds.current.has(messageId)) {
+        return; // Already processed
+      }
 
-      case 'status':
-        // Show status updates as system messages
-        const statusMessage: Message = {
-          id: `sse_${latestMessage.timestamp}`,
-          role: 'progress',
-          content: `${latestMessage.data.status}${latestMessage.data.details ? `: ${JSON.stringify(latestMessage.data.details)}` : ''}`,
-          timestamp: new Date(latestMessage.timestamp),
-        };
-        setMessages((prev) => [...prev, statusMessage]);
-        break;
+      processedMessageIds.current.add(messageId);
+      console.log('[SSE] Processing message:', sseMessage.type, sseMessage.data);
 
-      case 'file_change':
-        // Show file changes
-        const fileMessage: Message = {
-          id: `sse_${latestMessage.timestamp}`,
-          role: 'progress',
-          content: `File ${latestMessage.data.action}: ${latestMessage.data.filePath}`,
-          timestamp: new Date(latestMessage.timestamp),
-        };
-        setMessages((prev) => [...prev, fileMessage]);
-        break;
+      switch (sseMessage.type) {
+        case 'progress':
+          // Update progress indicator
+          setProgressMessage(sseMessage.data.message);
+          break;
 
-      case 'test_result':
-        // Show test results
-        const testMessage: Message = {
-          id: `sse_${latestMessage.timestamp}`,
-          role: 'progress',
-          content: `Tests: ${latestMessage.data.passed}/${latestMessage.data.total} passed`,
-          timestamp: new Date(latestMessage.timestamp),
-          tests: latestMessage.data,
-        };
-        setMessages((prev) => [...prev, testMessage]);
-        break;
+        case 'status':
+          // Show status updates as system messages
+          const statusMessage: Message = {
+            id: `sse_${sseMessage.timestamp}`,
+            role: 'progress',
+            content: `${sseMessage.data.status}${sseMessage.data.details ? `: ${JSON.stringify(sseMessage.data.details)}` : ''}`,
+            timestamp: new Date(sseMessage.timestamp),
+          };
+          setMessages((prev) => [...prev, statusMessage]);
+          break;
 
-      case 'error':
-        // Show errors
-        const errorMessage: Message = {
-          id: `sse_${latestMessage.timestamp}`,
-          role: 'system',
-          content: latestMessage.data.error,
-          timestamp: new Date(latestMessage.timestamp),
-          error: latestMessage.data.error,
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-        break;
+        case 'file_change':
+          // Show file changes
+          const fileMessage: Message = {
+            id: `sse_${sseMessage.timestamp}`,
+            role: 'progress',
+            content: `File ${sseMessage.data.action}: ${sseMessage.data.filePath}`,
+            timestamp: new Date(sseMessage.timestamp),
+          };
+          setMessages((prev) => [...prev, fileMessage]);
+          break;
 
-      case 'complete':
-        // Clear progress when complete
-        setProgressMessage(null);
-        break;
-    }
+        case 'test_result':
+          // Show test results
+          const testMessage: Message = {
+            id: `sse_${sseMessage.timestamp}`,
+            role: 'progress',
+            content: `Tests: ${sseMessage.data.passed}/${sseMessage.data.total} passed`,
+            timestamp: new Date(sseMessage.timestamp),
+            tests: sseMessage.data,
+          };
+          setMessages((prev) => [...prev, testMessage]);
+          break;
+
+        case 'error':
+          // Show errors
+          const errorMessage: Message = {
+            id: `sse_${sseMessage.timestamp}`,
+            role: 'system',
+            content: sseMessage.data.error,
+            timestamp: new Date(sseMessage.timestamp),
+            error: sseMessage.data.error,
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+          break;
+
+        case 'complete':
+          // Clear progress when complete
+          setProgressMessage(null);
+          break;
+      }
+    });
   }, [sseMessages]);
 
   /**
@@ -160,11 +177,7 @@ export default function ChatInterface() {
         };
 
         setMessages((prev) => [...prev, assistantMessage]);
-
-        // Update session ID for conversation continuity
-        if (data.data.sessionId) {
-          setSessionId(data.data.sessionId);
-        }
+        // Note: We keep using our client-generated sessionId for SSE consistency
       } else {
         // Error response
         const errorMessage: Message = {
@@ -207,7 +220,8 @@ export default function ChatInterface() {
    */
   const handleClearConversation = () => {
     setMessages([]);
-    setSessionId(undefined);
+    // Note: sessionId stays the same for SSE connection continuity
+    // If you want a fresh session, reload the page
   };
 
   return (
@@ -218,6 +232,11 @@ export default function ChatInterface() {
           <h2 className="text-xl font-bold text-gray-900">AI Coding Agent</h2>
           <p className="text-sm text-gray-600">
             Modifying: <span className="font-mono text-blue-600">staging</span>
+            {' • '}
+            <span className={`inline-flex items-center ${isConnected ? 'text-green-600' : 'text-gray-400'}`}>
+              <span className={`inline-block w-2 h-2 rounded-full mr-1 ${isConnected ? 'bg-green-600' : 'bg-gray-400'}`}></span>
+              {isConnected ? 'Live' : 'Connecting...'}
+            </span>
           </p>
         </div>
         <button
