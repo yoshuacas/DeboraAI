@@ -67,7 +67,7 @@ export default function ChatInterface() {
           message: input,
           conversationHistory,
           sessionId,
-          skipTests: true, // Temporarily skip tests while debugging test runner
+          skipTests: false, // Always run tests for admin requests
         }),
       });
 

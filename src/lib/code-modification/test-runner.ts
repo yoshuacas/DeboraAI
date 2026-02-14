@@ -1,5 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const execAsync = promisify(exec);
 
@@ -32,6 +34,7 @@ export interface CoverageResult {
  * Test runner configuration
  */
 export interface TestRunnerConfig {
+  projectRoot?: string;
   runUnit?: boolean;
   runIntegration?: boolean;
   runE2E?: boolean;
@@ -44,6 +47,7 @@ export interface TestRunnerConfig {
  * Default configuration
  */
 const DEFAULT_CONFIG: TestRunnerConfig = {
+  projectRoot: process.cwd(),
   runUnit: true,
   runIntegration: true,
   runE2E: false, // E2E tests are slower, skip by default
@@ -68,9 +72,11 @@ const DEFAULT_CONFIG: TestRunnerConfig = {
  */
 export class TestRunner {
   private config: TestRunnerConfig;
+  private projectRoot: string;
 
   constructor(config: Partial<TestRunnerConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
+    this.projectRoot = this.config.projectRoot || process.cwd();
   }
 
   /**
@@ -162,6 +168,7 @@ export class TestRunner {
     const startTime = Date.now();
 
     try {
+      const outputFile = path.join(this.projectRoot, 'test-results-unit.json');
       const command = this.config.collectCoverage
         ? 'npm test -- tests/unit --coverage --coverageDirectory=coverage/unit --json --outputFile=test-results-unit.json'
         : 'npm test -- tests/unit --json --outputFile=test-results-unit.json';
@@ -170,8 +177,8 @@ export class TestRunner {
         timeout: this.config.timeout,
       });
 
-      // Parse Jest JSON output
-      const result = this.parseJestOutput(stdout, stderr);
+      // Read Jest JSON output from file (Jest writes to file, not stdout)
+      const result = await this.parseJestOutputFromFile(outputFile, stdout, stderr);
       result.duration = Date.now() - startTime;
 
       // Parse coverage if collected
@@ -182,7 +189,8 @@ export class TestRunner {
       return result;
     } catch (error: any) {
       // Jest exits with non-zero code when tests fail
-      const result = this.parseJestOutput(error.stdout || '', error.stderr || '');
+      const outputFile = path.join(this.projectRoot, 'test-results-unit.json');
+      const result = await this.parseJestOutputFromFile(outputFile, error.stdout || '', error.stderr || '');
       result.duration = Date.now() - startTime;
       return result;
     }
@@ -195,17 +203,19 @@ export class TestRunner {
     const startTime = Date.now();
 
     try {
+      const outputFile = path.join(this.projectRoot, 'test-results-integration.json');
       const command = 'npm test -- tests/integration --json --outputFile=test-results-integration.json';
 
       const { stdout, stderr } = await execAsync(command, {
         timeout: this.config.timeout,
       });
 
-      const result = this.parseJestOutput(stdout, stderr);
+      const result = await this.parseJestOutputFromFile(outputFile, stdout, stderr);
       result.duration = Date.now() - startTime;
       return result;
     } catch (error: any) {
-      const result = this.parseJestOutput(error.stdout || '', error.stderr || '');
+      const outputFile = path.join(this.projectRoot, 'test-results-integration.json');
+      const result = await this.parseJestOutputFromFile(outputFile, error.stdout || '', error.stderr || '');
       result.duration = Date.now() - startTime;
       return result;
     }
@@ -231,6 +241,31 @@ export class TestRunner {
       const result = this.parsePlaywrightOutput(error.stdout || '', error.stderr || '');
       result.duration = Date.now() - startTime;
       return result;
+    }
+  }
+
+  /**
+   * Parse Jest output from JSON file
+   */
+  private async parseJestOutputFromFile(outputFile: string, stdout: string, stderr: string): Promise<TestResult> {
+    try {
+      // Read JSON from file
+      const fileContent = await fs.promises.readFile(outputFile, 'utf-8');
+      const data = JSON.parse(fileContent);
+
+      return {
+        success: data.success || false,
+        testsPassed: data.numPassedTests || 0,
+        testsFailed: data.numFailedTests || 0,
+        totalTests: data.numTotalTests || 0,
+        output: stdout,
+        errors: data.success ? undefined : stderr,
+        duration: 0, // Will be set by caller
+      };
+    } catch (e) {
+      // Fallback to parsing stdout if file read fails
+      console.warn('Failed to read test results file, falling back to stdout parsing:', e);
+      return this.parseJestOutput(stdout, stderr);
     }
   }
 
