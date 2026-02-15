@@ -145,7 +145,8 @@ export class PromotionManager {
 
     try {
       // Check 1: Staging has no uncommitted changes
-      const { stdout: stagingStatus } = await execAsync('git status --porcelain', {
+      // Use -uno to ignore untracked files (like test-results/, temp files, etc.)
+      const { stdout: stagingStatus } = await execAsync('git status --porcelain -uno', {
         cwd: this.stagingPath,
       });
 
@@ -154,7 +155,8 @@ export class PromotionManager {
       }
 
       // Check 2: Production branch is clean
-      const { stdout: productionStatus } = await execAsync('git status --porcelain', {
+      // Use -uno to ignore untracked files
+      const { stdout: productionStatus } = await execAsync('git status --porcelain -uno', {
         cwd: this.productionPath,
       });
 
