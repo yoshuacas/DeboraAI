@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import AdminHeader from '@/components/admin/AdminHeader';
 
 /**
  * Git commit information
@@ -59,8 +60,10 @@ export default function AdminHistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <AdminHeader />
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Change History</h1>
@@ -188,6 +191,7 @@ export default function AdminHistoryPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

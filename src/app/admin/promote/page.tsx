@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import AdminHeader from '@/components/admin/AdminHeader';
 
 /**
  * Promotion diff data
@@ -144,8 +145,10 @@ export default function PromotionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
+    <div className="min-h-screen bg-gray-50">
+      <AdminHeader />
+      <div className="py-8">
+        <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Promote to Production</h1>
@@ -343,6 +346,7 @@ export default function PromotionPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
