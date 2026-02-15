@@ -225,7 +225,7 @@ export class PromotionManager {
       console.log('-'.repeat(80));
 
       // Step 1: Safety checks
-      console.log('\n[Step 1/5] Running safety checks...');
+      console.log('\n[Step 1/6] Running safety checks...');
       const safetyCheck = await this.runSafetyChecks();
 
       if (!safetyCheck.passed) {
@@ -241,7 +241,7 @@ export class PromotionManager {
       console.log('✓ All safety checks passed');
 
       // Step 2: Get diff for summary
-      console.log('\n[Step 2/5] Analyzing changes...');
+      console.log('\n[Step 2/6] Analyzing changes...');
       const diff = await this.getDiff();
       console.log(`Changes to promote:`);
       console.log(`  - ${diff.commits.length} commit(s)`);
@@ -249,12 +249,12 @@ export class PromotionManager {
       console.log('✓ Changes analyzed');
 
       // Step 3: Push staging to origin (if not already)
-      console.log('\n[Step 3/5] Ensuring staging is pushed to origin...');
+      console.log('\n[Step 3/6] Ensuring staging is pushed to origin...');
       await execAsync('git push origin staging', { cwd: this.stagingPath });
       console.log('✓ Staging pushed to origin');
 
       // Step 4: Merge staging into main (from production worktree)
-      console.log('\n[Step 4/5] Merging staging into main branch...');
+      console.log('\n[Step 4/6] Merging staging into main branch...');
 
       try {
         // In production worktree, merge origin/staging into main
@@ -271,8 +271,30 @@ export class PromotionManager {
 
         console.log('✓ Merge completed');
 
-        // Step 5: Push to remote main
-        console.log('\n[Step 5/5] Pushing to production branch...');
+        // Install dependencies in production
+        console.log('\n[Step 5/6] Installing dependencies in production...');
+        await execAsync('npm install', {
+          cwd: this.productionPath,
+          timeout: 120000, // 2 minute timeout
+        });
+        console.log('✓ Dependencies installed');
+
+        // Check if npm install modified package-lock.json and commit if so
+        const { stdout: lockfileStatus } = await execAsync('git status --porcelain package-lock.json', {
+          cwd: this.productionPath,
+        });
+
+        if (lockfileStatus.trim().length > 0) {
+          console.log('  → package-lock.json was updated, committing...');
+          await execAsync('git add package-lock.json', { cwd: this.productionPath });
+          await execAsync('git commit -m "Update package-lock.json after npm install"', {
+            cwd: this.productionPath,
+          });
+          console.log('  ✓ package-lock.json committed');
+        }
+
+        // Step 6: Push to remote main
+        console.log('\n[Step 6/6] Pushing to production branch...');
         await execAsync('git push origin main', { cwd: this.productionPath });
         console.log('✓ Pushed to origin/main');
 
