@@ -279,6 +279,20 @@ export class PromotionManager {
         });
         console.log('✓ Dependencies installed');
 
+        // Check if npm install modified package-lock.json and commit if so
+        const { stdout: lockfileStatus } = await execAsync('git status --porcelain package-lock.json', {
+          cwd: this.productionPath,
+        });
+
+        if (lockfileStatus.trim().length > 0) {
+          console.log('  → package-lock.json was updated, committing...');
+          await execAsync('git add package-lock.json', { cwd: this.productionPath });
+          await execAsync('git commit -m "Update package-lock.json after npm install"', {
+            cwd: this.productionPath,
+          });
+          console.log('  ✓ package-lock.json committed');
+        }
+
         // Step 6: Push to remote main
         console.log('\n[Step 6/6] Pushing to production branch...');
         await execAsync('git push origin main', { cwd: this.productionPath });
