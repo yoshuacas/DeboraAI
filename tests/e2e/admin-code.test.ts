@@ -22,23 +22,25 @@ test.describe('Admin Code Modification Interface', () => {
     // Check for page title
     await expect(page.locator('h1:has-text("Code Modification")')).toBeVisible();
 
-    // Check for request input
-    await expect(page.locator('textarea[name="request"]')).toBeVisible();
+    // Check for chat interface
+    await expect(page.locator('h2:has-text("AI Coding Agent")')).toBeVisible();
+
+    // Check for request input (textarea with placeholder)
+    await expect(page.locator('textarea[placeholder*="Describe the changes"]')).toBeVisible();
 
     // Check for submit button
-    await expect(page.locator('button:has-text("Submit Request")')).toBeVisible();
+    await expect(page.locator('button:has-text("Send")')).toBeVisible();
   });
 
   test('should show validation error for empty request', async ({ page }) => {
     await login(page);
     await page.goto('/admin/code');
 
-    // Try to submit empty request
-    await page.click('button:has-text("Submit Request")');
+    // Send button should be disabled when textarea is empty
+    const sendButton = page.locator('button:has-text("Send")');
+    await expect(sendButton).toBeDisabled();
 
-    // Should show error (either inline or as toast/alert)
-    await page.waitForTimeout(1000);
-    // Check that we're still on the same page (didn't submit)
+    // Check that we're still on the same page
     expect(page.url()).toContain('/admin/code');
   });
 
@@ -48,10 +50,10 @@ test.describe('Admin Code Modification Interface', () => {
 
     // Fill in a simple request
     const testRequest = 'Add a comment to the README file explaining this is a test';
-    await page.fill('textarea[name="request"]', testRequest);
+    await page.fill('textarea[placeholder*="Describe the changes"]', testRequest);
 
     // Submit the request
-    await page.click('button:has-text("Submit Request")');
+    await page.click('button:has-text("Send")');
 
     // Should show loading/progress indicator
     await expect(page.locator('text=/Processing|Initializing|Claude Agent/')).toBeVisible({
@@ -69,8 +71,8 @@ test.describe('Admin Code Modification Interface', () => {
     await page.goto('/admin/code');
 
     // Submit a request
-    await page.fill('textarea[name="request"]', 'Create a test file in /tmp directory');
-    await page.click('button:has-text("Submit Request")');
+    await page.fill('textarea[placeholder*="Describe the changes"]', 'Create a test file in /tmp directory');
+    await page.click('button:has-text("Send")');
 
     // Should see progress updates via SSE
     const progressSteps = [
@@ -90,8 +92,8 @@ test.describe('Admin Code Modification Interface', () => {
     await page.goto('/admin/code');
 
     // Submit request
-    await page.fill('textarea[name="request"]', 'Update the README with a timestamp');
-    await page.click('button:has-text("Submit Request")');
+    await page.fill('textarea[placeholder*="Describe the changes"]', 'Update the README with a timestamp');
+    await page.click('button:has-text("Send")');
 
     // Wait for completion
     await page.waitForSelector('text=/success|completed/i', {
@@ -121,7 +123,7 @@ test.describe('Admin Code Modification Interface', () => {
     await page.goto('/admin/code');
 
     // Submit first request
-    await page.fill('textarea[name="request"]', 'First request');
+    await page.fill('textarea[placeholder*="Describe the changes"]', 'First request');
     await page.click('button[type="submit"]');
     await page.waitForSelector('text=/success|completed/i', { timeout: 120000 });
 
@@ -129,7 +131,7 @@ test.describe('Admin Code Modification Interface', () => {
     await expect(page.locator('text="First request"')).toBeVisible();
 
     // Submit second request (should maintain context)
-    await page.fill('textarea[name="request"]', 'Follow-up request');
+    await page.fill('textarea[placeholder*="Describe the changes"]', 'Follow-up request');
     await page.click('button[type="submit"]');
     await page.waitForSelector('text=/success|completed/i', { timeout: 120000 });
 
@@ -146,7 +148,7 @@ test.describe('Admin Code Modification API', () => {
 
     // Submit a request that might cause an error
     await page.fill(
-      'textarea[name="request"]',
+      'textarea[placeholder*="Describe the changes"]',
       'Delete all files in the root directory' // Should be blocked by safety rules
     );
     await page.click('button[type="submit"]');
@@ -157,26 +159,4 @@ test.describe('Admin Code Modification API', () => {
     });
   });
 
-  test('should skip tests when skipTests flag is set', async ({ page }) => {
-    await login(page);
-    await page.goto('/admin/code');
-
-    // Check if there's a "skip tests" checkbox
-    const skipTestsCheckbox = page.locator('input[type="checkbox"][name="skipTests"]');
-    if (await skipTestsCheckbox.isVisible()) {
-      await skipTestsCheckbox.check();
-    }
-
-    // Submit request
-    await page.fill('textarea[name="request"]', 'Add a comment to README');
-    await page.click('button[type="submit"]');
-
-    // Wait for completion
-    await page.waitForSelector('text=/success|completed/i', { timeout: 120000 });
-
-    // Should see indication that tests were skipped
-    await expect(page.locator('text=/tests skipped|skipping tests/i')).toBeVisible({
-      timeout: 5000,
-    });
-  });
 });

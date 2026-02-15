@@ -68,8 +68,12 @@ test.describe('Admin Promotion Interface', () => {
       .isVisible();
 
     if (!hasChanges) {
-      // Should show commit count, files changed, lines changed
-      await expect(page.locator('text=/Commits|Files Changed|Lines Changed/i')).toBeVisible();
+      // Should show commit count, files changed, lines changed headers
+      const hasCommitsHeader = await page.locator('h3:has-text("Commits")').isVisible();
+      const hasFilesHeader = await page.locator('h3:has-text("Files Changed")').isVisible();
+
+      // At least one of these headers should be visible when there are changes
+      expect(hasCommitsHeader || hasFilesHeader).toBe(true);
     }
   });
 
@@ -185,9 +189,9 @@ test.describe('Admin Promotion Interface', () => {
 
     // Should show either "No promotions yet" or promotion items
     const hasHistory = await page.locator('text=/No promotions yet/i').isVisible();
-    const hasPromotionItems = await page.locator('.border-l-4.border-green-500').isVisible();
+    const promotionItemsCount = await page.locator('.border-l-4.border-green-500').count();
 
-    expect(hasHistory || hasPromotionItems).toBe(true);
+    expect(hasHistory || promotionItemsCount > 0).toBe(true);
   });
 
   test('should show detailed file changes', async ({ page }) => {
