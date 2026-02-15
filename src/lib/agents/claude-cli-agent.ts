@@ -1,5 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { writeFileSync, unlinkSync } from 'fs';
+import { join } from 'path';
 import { buildCodebaseContext, formatContextForAgent } from './codebase-context';
 
 const execAsync = promisify(exec);
@@ -79,17 +81,39 @@ export class ClaudeCLIAgent {
       const env = { ...process.env };
       delete env.CLAUDECODE;
 
-      // Build claude command
-      // Use -p for prompt, --dangerously-skip-permissions to bypass permission checks
-      const command = `${this.claudePath} -p "${this.escapePrompt(fullPrompt)}" --dangerously-skip-permissions`;
+      // Write prompt to temporary file to avoid command line length limits
+      const tempFile = join(this.projectRoot, `.claude-prompt-${Date.now()}.txt`);
+      writeFileSync(tempFile, fullPrompt, 'utf-8');
 
-      // Execute claude CLI
-      const { stdout, stderr } = await execAsync(command, {
-        cwd: this.projectRoot,
-        env,
-        maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large outputs
-        timeout: 300000, // 5 minute timeout
-      });
+      console.log('Executing:', `${this.claudePath} --dangerously-skip-permissions (with prompt from temp file)`);
+
+      let stdout: string;
+      let stderr: string;
+
+      try {
+        // Execute claude CLI with stdin redirected from temp file
+        const command = `${this.claudePath} --dangerously-skip-permissions < "${tempFile}"`;
+
+        const result = await execAsync(command, {
+          cwd: this.projectRoot,
+          env,
+          maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large outputs
+          timeout: 300000, // 5 minute timeout
+          shell: '/bin/bash',
+        });
+
+        stdout = result.stdout;
+        stderr = result.stderr;
+
+        // Clean up temp file
+        unlinkSync(tempFile);
+      } catch (error) {
+        // Clean up temp file even on error
+        try {
+          unlinkSync(tempFile);
+        } catch {}
+        throw error;
+      }
 
       console.log('✓ Claude CLI completed');
 
