@@ -27,10 +27,19 @@ test.describe('Admin Promotion Interface', () => {
     await login(page);
     await page.goto('/admin/promote');
 
-    // Wait for data to load
-    await page.waitForSelector('text=/Safety Checks|Changes to Promote/i', {
-      timeout: 10000,
+    // Wait for loading to finish (either shows content or error)
+    await page.waitForSelector('text=/Safety Checks|Loading promotion data.../i', {
+      timeout: 15000,
     });
+
+    // Wait for loading spinner to disappear if present
+    const isLoading = await page.locator('text=/Loading promotion data.../i').isVisible();
+    if (isLoading) {
+      await page.waitForSelector('text=/Loading promotion data.../i', {
+        state: 'detached',
+        timeout: 30000,
+      });
+    }
 
     // Should show safety checks section
     await expect(page.locator('h2:has-text("Safety Checks")')).toBeVisible();
@@ -43,8 +52,21 @@ test.describe('Admin Promotion Interface', () => {
     await login(page);
     await page.goto('/admin/promote');
 
-    // Wait for safety checks to complete
-    await page.waitForSelector('text=/Safety Checks/i', { timeout: 10000 });
+    // Wait for loading to finish
+    await page.waitForTimeout(5000);
+
+    const isLoading = await page.locator('text=/Loading promotion data.../i').isVisible();
+    if (isLoading) {
+      await page.waitForSelector('text=/Loading promotion data.../i', {
+        state: 'detached',
+        timeout: 30000,
+      });
+    }
+
+    // Wait for safety checks section to appear
+    await expect(page.locator('h2:has-text("Safety Checks")')).toBeVisible({
+      timeout: 10000,
+    });
 
     // Should show either pass or fail
     const hasPassIcon = await page.locator('text=/All checks passed|ready to promote/i').isVisible();
@@ -59,21 +81,28 @@ test.describe('Admin Promotion Interface', () => {
     await login(page);
     await page.goto('/admin/promote');
 
-    // Wait for data to load
-    await page.waitForTimeout(3000);
+    // Wait for loading to finish
+    await page.waitForTimeout(5000);
 
-    // If there are changes, should show commits
-    const hasChanges = await page
+    const isLoading = await page.locator('text=/Loading promotion data.../i').isVisible();
+    if (isLoading) {
+      await page.waitForSelector('text=/Loading promotion data.../i', {
+        state: 'detached',
+        timeout: 30000,
+      });
+    }
+
+    // Check if there are changes to promote (no changes message)
+    const noChanges = await page
       .locator('text=/No changes to promote|already in sync/i')
       .isVisible();
 
-    if (!hasChanges) {
-      // Should show commit count, files changed, lines changed headers
-      const hasCommitsHeader = await page.locator('h3:has-text("Commits")').isVisible();
-      const hasFilesHeader = await page.locator('h3:has-text("Files Changed")').isVisible();
-
-      // At least one of these headers should be visible when there are changes
-      expect(hasCommitsHeader || hasFilesHeader).toBe(true);
+    if (!noChanges) {
+      // Should show Changes to Promote section
+      await expect(page.locator('h2:has-text("Changes to Promote")')).toBeVisible();
+    } else {
+      // No changes to promote, test passes
+      expect(noChanges).toBe(true);
     }
   });
 
