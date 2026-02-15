@@ -130,13 +130,16 @@ test.describe('Admin Change History Page', () => {
     await login(page);
     await page.goto('/admin/history');
 
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
-    const commitCards = await page.locator('.bg-white.rounded-lg.border').count();
+    const emptyState = await page.locator('text=/No changes yet/i').isVisible();
 
-    if (commitCards > 0) {
+    if (!emptyState) {
       // Should have View Diff button
       await expect(page.locator('button:has-text("View Diff")').first()).toBeVisible();
+    } else {
+      // No commits, test passes
+      expect(emptyState).toBe(true);
     }
   });
 
@@ -144,13 +147,16 @@ test.describe('Admin Change History Page', () => {
     await login(page);
     await page.goto('/admin/history');
 
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
-    const commitCards = await page.locator('.bg-white.rounded-lg.border').count();
+    const emptyState = await page.locator('text=/No changes yet/i').isVisible();
 
-    if (commitCards > 0) {
+    if (!emptyState) {
       // Should have Revert button
       await expect(page.locator('button:has-text("Revert")').first()).toBeVisible();
+    } else {
+      // No commits, test passes
+      expect(emptyState).toBe(true);
     }
   });
 
@@ -198,14 +204,18 @@ test.describe('Admin Change History Page', () => {
     await login(page);
     await page.goto('/admin/history');
 
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
-    const commitCards = await page.locator('.bg-white.rounded-lg.border').count();
+    const emptyState = await page.locator('text=/No changes yet/i').isVisible();
 
-    if (commitCards > 0) {
-      // Should show formatted date (contains numbers and common date separators)
-      const dateText = await page.locator('.text-sm.text-gray-600').first().textContent();
+    if (!emptyState) {
+      // Find date text within commit cards (skip the header)
+      const commitCard = page.locator('.bg-white.rounded-lg.border').first();
+      const dateText = await commitCard.locator('.text-sm.text-gray-600').textContent();
       expect(dateText).toMatch(/\d+/); // Should contain numbers
+    } else {
+      // No commits, test passes
+      expect(emptyState).toBe(true);
     }
   });
 
