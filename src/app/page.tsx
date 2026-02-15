@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="flex flex-col items-center gap-8">
-        <pre className="font-mono text-sm leading-tight text-cyan-600 dark:text-cyan-400">
+        <pre className="font-mono text-sm leading-tight text-amber-700 dark:text-amber-600">
 {`
     ╔═══════════════════════════════╗
     ║   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   ║
