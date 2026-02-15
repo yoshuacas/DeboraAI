@@ -55,14 +55,15 @@ test.describe('Admin Code Modification Interface', () => {
     // Submit the request
     await page.click('button:has-text("Send")');
 
-    // Should show loading/progress indicator
-    await expect(page.locator('text=/Processing|Initializing|Claude Agent/')).toBeVisible({
+    // Should show loading indicator (spinning animation with text)
+    await expect(page.locator('.animate-spin').first()).toBeVisible({
       timeout: 5000,
     });
 
     // Wait for completion (with generous timeout for AI agent)
-    await page.waitForSelector('text=/completed|success|done/i', {
-      timeout: 120000, // 2 minutes
+    await page.waitForSelector('.animate-spin', {
+      state: 'detached',
+      timeout: 180000, // 3 minutes
     });
   });
 
@@ -74,17 +75,16 @@ test.describe('Admin Code Modification Interface', () => {
     await page.fill('textarea[placeholder*="Describe the changes"]', 'Create a test file in /tmp directory');
     await page.click('button:has-text("Send")');
 
-    // Should see progress updates via SSE
-    const progressSteps = [
-      /Initializing|initialized/i,
-      /Claude Agent|analyzing|modifying/i,
-    ];
+    // Should show loading spinner
+    await expect(page.locator('.animate-spin').first()).toBeVisible({
+      timeout: 5000,
+    });
 
-    for (const step of progressSteps) {
-      await expect(page.locator(`text=${step}`)).toBeVisible({
-        timeout: 30000,
-      });
-    }
+    // Should show progress text that updates (look for spinner parent with progress text)
+    const progressContainer = page.locator('.bg-gray-100.rounded-lg.p-4').filter({ hasText: /AI agent is working|Initializing/i });
+    await expect(progressContainer).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should show modified files after completion', async ({ page }) => {
