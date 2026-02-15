@@ -50,3 +50,5 @@ next-env.d.ts
 
 # test results
 test-results-*.json
+.claude-prompt-*.txt
+test-results/

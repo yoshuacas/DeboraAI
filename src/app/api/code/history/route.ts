@@ -25,14 +25,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Format commits for frontend
-    const commits = logResult.data.map((commit) => ({
+    // simple-git returns log with .all array containing commits
+    const logData = logResult.data as any;
+    const commits = (logData.all || []).map((commit: any) => ({
       hash: commit.hash,
       shortHash: commit.hash.substring(0, 7),
       message: commit.message,
       author: commit.author_name,
       date: commit.date,
-      files: commit.refs ? commit.refs.split(',').map((ref) => ref.trim()) : [],
+      files: [], // File information not available in simple log
     }));
 
     return NextResponse.json({

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClaudeAgent } from '@/lib/agents/claude-agent';
+import { createClaudeCLIAgent } from '@/lib/agents/claude-cli-agent';
 import { createGitManager } from '@/lib/code-modification/git-manager';
 import { createMigrationManager } from '@/lib/code-modification/migration-manager';
 import { runTests } from '@/lib/code-modification/test-runner';
@@ -15,23 +15,27 @@ import {
 /**
  * POST /api/code/modify
  *
- * Main orchestrator endpoint for code modifications using Claude Agent SDK.
+ * Main orchestrator endpoint for code modifications using Claude CLI.
  *
- * New Flow (Agent SDK):
+ * Flow:
  * 1. Receive user request
- * 2. Call Claude Agent SDK - Claude directly modifies files in staging
+ * 2. Call Claude CLI directly - Claude modifies files in staging
  * 3. Check git status for modified files
  * 4. Handle database migrations if schema changed
- * 5. Create git commit
+ * 5. Create git commit and push to remote
  * 6. Run automated tests
  * 7. Return results
+ *
+ * Uses Claude CLI instead of Agent SDK to avoid nested session errors.
+ * Environment variable CLAUDECODE is removed before spawning subprocess.
  *
  * Request body:
  * {
  *   "message": "User request in natural language",
  *   "conversationHistory": [...], // Optional
  *   "skipTests": false // Optional - for testing only
- *   "sessionId": "session_abc123" // Optional - to continue conversation
+ *   "sessionId": "session_abc123" // Optional - for SSE filtering
+ *   "agentSessionId": "agent_abc123" // Optional - for conversation continuity
  * }
  */
 export async function POST(request: NextRequest) {
@@ -66,7 +70,7 @@ export async function POST(request: NextRequest) {
     console.log('\n[Step 1/5] Initializing services...');
     broadcastProgress('Initializing services...', sessionId);
     const projectRoot = process.cwd();
-    const claudeAgent = createClaudeAgent(projectRoot);
+    const claudeAgent = createClaudeCLIAgent(projectRoot);
     const gitManager = createGitManager(projectRoot);
     const migrationManager = createMigrationManager(projectRoot);
     console.log('✓ Services initialized');

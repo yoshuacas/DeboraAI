@@ -1,4 +1,5 @@
 import ChatInterface from '@/components/admin/ChatInterface';
+import AdminHeader from '@/components/admin/AdminHeader';
 
 /**
  * Admin Code Modification Dashboard
@@ -8,8 +9,10 @@ import ChatInterface from '@/components/admin/ChatInterface';
  */
 export default function AdminCodePage() {
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <AdminHeader />
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Code Modification</h1>
@@ -111,6 +114,7 @@ export default function AdminCodePage() {
             </p>
           </a>
         </div>
+      </div>
       </div>
     </div>
   );
