@@ -53,7 +53,7 @@ async function main() {
       phone: '+34 91 123 4567',
       contactEmail: 'maria.garcia@bufete-garcia.es',
       contactAddress: 'Calle Mayor 123, 28013 Madrid, España',
-      role: 'CUSTOMER',
+      role: 'LAWYER',
       subscriptionPlan: 'PROFESSIONAL',
       subscriptionEnds: new Date('2026-12-31'),
     },

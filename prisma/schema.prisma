@@ -51,6 +51,7 @@ model Session {
 
 enum Role {
   ADMIN
+  LAWYER
   CUSTOMER
 }
 

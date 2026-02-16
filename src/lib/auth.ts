@@ -1,24 +1,20 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
 
 /**
  * NextAuth Configuration
  *
- * Handles authentication for DeboraAI admin interface.
+ * Handles authentication for DeboraAI.
  * Uses credentials (email/password) with bcrypt hashing.
  *
  * Protected routes:
- * - /admin/* (all admin pages)
- * - /api/code/* (code modification APIs)
- * - /api/promotion/* (promotion APIs)
+ * - /admin/* (admin pages - ADMIN role)
+ * - /dashboard, /clientes, etc. (lawyer pages - LAWYER or ADMIN role)
+ * - /api/code/* (code modification APIs - ADMIN role)
  */
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: 'Credentials',

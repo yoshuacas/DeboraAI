@@ -1,0 +1,395 @@
+{
+  "config": {
+    "configFile": "/Users/davcasd/research/DeboraAI/staging/playwright.config.ts",
+    "rootDir": "/Users/davcasd/research/DeboraAI/staging/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 3
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/davcasd/research/DeboraAI/staging/test-results",
+        "repeatEach": 3,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 3
+        },
+        "id": "staging-chromium",
+        "name": "staging-chromium",
+        "testDir": "/Users/davcasd/research/DeboraAI/staging/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/davcasd/research/DeboraAI/staging/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 3
+        },
+        "id": "production-chromium",
+        "name": "production-chromium",
+        "testDir": "/Users/davcasd/research/DeboraAI/staging/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/davcasd/research/DeboraAI/staging/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 3
+        },
+        "id": "staging-firefox",
+        "name": "staging-firefox",
+        "testDir": "/Users/davcasd/research/DeboraAI/staging/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/davcasd/research/DeboraAI/staging/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 3
+        },
+        "id": "staging-webkit",
+        "name": "staging-webkit",
+        "testDir": "/Users/davcasd/research/DeboraAI/staging/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/davcasd/research/DeboraAI/staging/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 3
+        },
+        "id": "staging-mobile-chrome",
+        "name": "staging-mobile-chrome",
+        "testDir": "/Users/davcasd/research/DeboraAI/staging/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/davcasd/research/DeboraAI/staging/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 3
+        },
+        "id": "staging-mobile-safari",
+        "name": "staging-mobile-safari",
+        "testDir": "/Users/davcasd/research/DeboraAI/staging/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "playwright-report.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 6,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "lawyer-dashboard.spec.ts",
+      "file": "lawyer-dashboard.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Lawyer Dashboard",
+          "file": "lawyer-dashboard.spec.ts",
+          "line": 17,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should login successfully as lawyer",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "staging-chromium",
+                  "projectName": "staging-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 10702,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected substring: \u001b[32m\"Dashboard\"\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 class=\"text-xl font-bold text-white\">DeboraAI</h1> aka getByRole('heading', { name: 'DeboraAI' })\n    2) <h1 class=\"text-2xl font-bold text-gray-900\">Dashboard</h1> aka getByRole('heading', { name: 'Dashboard' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected substring: \u001b[32m\"Dashboard\"\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 class=\"text-xl font-bold text-white\">DeboraAI</h1> aka getByRole('heading', { name: 'DeboraAI' })\n    2) <h1 class=\"text-2xl font-bold text-gray-900\">Dashboard</h1> aka getByRole('heading', { name: 'Dashboard' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n    at /Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts:43:38",
+                        "location": {
+                          "file": "/Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts",
+                          "column": 38,
+                          "line": 43
+                        },
+                        "snippet": "  41 |     // Verify we're on dashboard\n  42 |     await expect(page).toHaveURL(`${BASE_URL}/dashboard`);\n> 43 |     await expect(page.locator('h1')).toContainText('Dashboard');\n     |                                      ^\n  44 |   });\n  45 |\n  46 |   test('should display dashboard with stats after login', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts",
+                            "column": 38,
+                            "line": 43
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected substring: \u001b[32m\"Dashboard\"\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 class=\"text-xl font-bold text-white\">DeboraAI</h1> aka getByRole('heading', { name: 'DeboraAI' })\n    2) <h1 class=\"text-2xl font-bold text-gray-900\">Dashboard</h1> aka getByRole('heading', { name: 'Dashboard' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n\n  41 |     // Verify we're on dashboard\n  42 |     await expect(page).toHaveURL(`${BASE_URL}/dashboard`);\n> 43 |     await expect(page.locator('h1')).toContainText('Dashboard');\n     |                                      ^\n  44 |   });\n  45 |\n  46 |   test('should display dashboard with stats after login', async ({ page }) => {\n    at /Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts:43:38"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-16T23:25:38.360Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/davcasd/research/DeboraAI/staging/test-results/lawyer-dashboard-Lawyer-Da-a1d51-ogin-successfully-as-lawyer-staging-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/davcasd/research/DeboraAI/staging/test-results/lawyer-dashboard-Lawyer-Da-a1d51-ogin-successfully-as-lawyer-staging-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/davcasd/research/DeboraAI/staging/test-results/lawyer-dashboard-Lawyer-Da-a1d51-ogin-successfully-as-lawyer-staging-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts",
+                        "column": 38,
+                        "line": 43
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "b7bc598d2cfb22fbdbd5-69bb2c4525c89c1886c4",
+              "file": "lawyer-dashboard.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "should login successfully as lawyer",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "staging-chromium",
+                  "projectName": "staging-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 10621,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected substring: \u001b[32m\"Dashboard\"\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 class=\"text-xl font-bold text-white\">DeboraAI</h1> aka getByRole('heading', { name: 'DeboraAI' })\n    2) <h1 class=\"text-2xl font-bold text-gray-900\">Dashboard</h1> aka getByRole('heading', { name: 'Dashboard' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected substring: \u001b[32m\"Dashboard\"\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 class=\"text-xl font-bold text-white\">DeboraAI</h1> aka getByRole('heading', { name: 'DeboraAI' })\n    2) <h1 class=\"text-2xl font-bold text-gray-900\">Dashboard</h1> aka getByRole('heading', { name: 'Dashboard' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n    at /Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts:43:38",
+                        "location": {
+                          "file": "/Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts",
+                          "column": 38,
+                          "line": 43
+                        },
+                        "snippet": "  41 |     // Verify we're on dashboard\n  42 |     await expect(page).toHaveURL(`${BASE_URL}/dashboard`);\n> 43 |     await expect(page.locator('h1')).toContainText('Dashboard');\n     |                                      ^\n  44 |   });\n  45 |\n  46 |   test('should display dashboard with stats after login', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts",
+                            "column": 38,
+                            "line": 43
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected substring: \u001b[32m\"Dashboard\"\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 class=\"text-xl font-bold text-white\">DeboraAI</h1> aka getByRole('heading', { name: 'DeboraAI' })\n    2) <h1 class=\"text-2xl font-bold text-gray-900\">Dashboard</h1> aka getByRole('heading', { name: 'Dashboard' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n\n  41 |     // Verify we're on dashboard\n  42 |     await expect(page).toHaveURL(`${BASE_URL}/dashboard`);\n> 43 |     await expect(page.locator('h1')).toContainText('Dashboard');\n     |                                      ^\n  44 |   });\n  45 |\n  46 |   test('should display dashboard with stats after login', async ({ page }) => {\n    at /Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts:43:38"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-16T23:25:38.369Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/davcasd/research/DeboraAI/staging/test-results/lawyer-dashboard-Lawyer-Da-a1d51-ogin-successfully-as-lawyer-staging-chromium-repeat1/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/davcasd/research/DeboraAI/staging/test-results/lawyer-dashboard-Lawyer-Da-a1d51-ogin-successfully-as-lawyer-staging-chromium-repeat1/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/davcasd/research/DeboraAI/staging/test-results/lawyer-dashboard-Lawyer-Da-a1d51-ogin-successfully-as-lawyer-staging-chromium-repeat1/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts",
+                        "column": 38,
+                        "line": 43
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "b7bc598d2cfb22fbdbd5-bb64c527e2f49b68548c",
+              "file": "lawyer-dashboard.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "should login successfully as lawyer",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "staging-chromium",
+                  "projectName": "staging-chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 10738,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected substring: \u001b[32m\"Dashboard\"\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 class=\"text-xl font-bold text-white\">DeboraAI</h1> aka getByRole('heading', { name: 'DeboraAI' })\n    2) <h1 class=\"text-2xl font-bold text-gray-900\">Dashboard</h1> aka getByRole('heading', { name: 'Dashboard' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected substring: \u001b[32m\"Dashboard\"\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 class=\"text-xl font-bold text-white\">DeboraAI</h1> aka getByRole('heading', { name: 'DeboraAI' })\n    2) <h1 class=\"text-2xl font-bold text-gray-900\">Dashboard</h1> aka getByRole('heading', { name: 'Dashboard' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n    at /Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts:43:38",
+                        "location": {
+                          "file": "/Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts",
+                          "column": 38,
+                          "line": 43
+                        },
+                        "snippet": "  41 |     // Verify we're on dashboard\n  42 |     await expect(page).toHaveURL(`${BASE_URL}/dashboard`);\n> 43 |     await expect(page.locator('h1')).toContainText('Dashboard');\n     |                                      ^\n  44 |   });\n  45 |\n  46 |   test('should display dashboard with stats after login', async ({ page }) => {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts",
+                            "column": 38,
+                            "line": 43
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected substring: \u001b[32m\"Dashboard\"\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 class=\"text-xl font-bold text-white\">DeboraAI</h1> aka getByRole('heading', { name: 'DeboraAI' })\n    2) <h1 class=\"text-2xl font-bold text-gray-900\">Dashboard</h1> aka getByRole('heading', { name: 'Dashboard' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n\n  41 |     // Verify we're on dashboard\n  42 |     await expect(page).toHaveURL(`${BASE_URL}/dashboard`);\n> 43 |     await expect(page.locator('h1')).toContainText('Dashboard');\n     |                                      ^\n  44 |   });\n  45 |\n  46 |   test('should display dashboard with stats after login', async ({ page }) => {\n    at /Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts:43:38"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-16T23:25:38.438Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/davcasd/research/DeboraAI/staging/test-results/lawyer-dashboard-Lawyer-Da-a1d51-ogin-successfully-as-lawyer-staging-chromium-repeat2/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/davcasd/research/DeboraAI/staging/test-results/lawyer-dashboard-Lawyer-Da-a1d51-ogin-successfully-as-lawyer-staging-chromium-repeat2/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/davcasd/research/DeboraAI/staging/test-results/lawyer-dashboard-Lawyer-Da-a1d51-ogin-successfully-as-lawyer-staging-chromium-repeat2/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/davcasd/research/DeboraAI/staging/tests/e2e/lawyer-dashboard.spec.ts",
+                        "column": 38,
+                        "line": 43
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "b7bc598d2cfb22fbdbd5-571f3958dbcd7a55ad59",
+              "file": "lawyer-dashboard.spec.ts",
+              "line": 30,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-02-16T23:25:35.590Z",
+    "duration": 15589.117000000002,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 3,
+    "flaky": 0
+  }
+}
