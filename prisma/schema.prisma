@@ -12,16 +12,29 @@ datasource db {
 
 // User model for authentication
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(CUSTOMER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String            @id @default(cuid())
+  email            String            @unique
+  password         String
+  name             String
+  role             Role              @default(CUSTOMER)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
-  chats     Chat[]
-  sessions  Session[]
+  // Extended fields for Debora (lawyers)
+  firstName        String?
+  lastName         String?
+  phone            String?
+  contactEmail     String?
+  contactAddress   String?
+  subscriptionPlan SubscriptionPlan  @default(FREE)
+  subscriptionEnds DateTime?
+
+  chats            Chat[]
+  sessions         Session[]
+  clients          Client[]
+  library          LibraryDocument[]
+  templates        Template[]
+  calendarEvents   CalendarEvent[]
 }
 
 // NextAuth session model
@@ -39,6 +52,12 @@ model Session {
 enum Role {
   ADMIN
   CUSTOMER
+}
+
+enum SubscriptionPlan {
+  FREE
+  PROFESSIONAL
+  ENTERPRISE
 }
 
 // Chat conversations (both coding agent and legal agent)
@@ -76,16 +95,170 @@ model CodeChange {
   @@index([deployedToProduction])
 }
 
-// Example feature: Case management (Agent can add more models like this)
-model Case {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  status      String   @default("OPEN")
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// Clients managed by lawyers
+model Client {
+  id             String    @id @default(cuid())
+  email          String
+  firstName      String
+  lastName       String
+  phone          String?
+  contactEmail   String?
+  contactAddress String?
+  dateOfBirth    DateTime?
+  idNumber       String?
 
-  @@index([userId])
+  lawyerId       String
+  lawyer         User      @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+
+  cases          Case[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([lawyerId])
+}
+
+// Legal cases
+model Case {
+  id             String              @id @default(cuid())
+  name           String
+  court          String?
+  status         CaseStatus          @default(OPEN)
+
+  clientId       String
+  client         Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  supportDocs    SupportDocument[]
+  generatedDocs  GeneratedDocument[]
+  calendarEvents CalendarEvent[]
+
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([clientId])
   @@index([status])
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  ARCHIVED
+}
+
+// Support documents for cases
+model SupportDocument {
+  id        String   @id @default(cuid())
+  name      String
+  fileUrl   String
+  fileType  String
+  summary   String?
+  tags      String   // JSON array
+
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId])
+}
+
+// Generated documents for cases
+model GeneratedDocument {
+  id        String   @id @default(cuid())
+  name      String
+  fileUrl   String
+  fileType  String
+  summary   String?
+  tags      String   // JSON array
+
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId])
+}
+
+// Legal library documents
+model LibraryDocument {
+  id        String   @id @default(cuid())
+  name      String
+  fileUrl   String
+  fileType  String
+  summary   String?
+  tags      String   // JSON array
+
+  lawyerId  String
+  lawyer    User     @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([lawyerId])
+}
+
+// Document templates
+model Template {
+  id           String       @id @default(cuid())
+  name         String
+  templateType TemplateType
+  fileUrl      String
+  fileType     String
+  summary      String?
+  tags         String       // JSON array
+
+  lawyerId     String
+  lawyer       User         @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([lawyerId])
+  @@index([templateType])
+}
+
+enum TemplateType {
+  SALE_CONTRACT
+  PETITION
+  LAWSUIT
+  POWER_OF_ATTORNEY
+  RENTAL_AGREEMENT
+  NDA
+  SETTLEMENT
+  COMPLAINT
+  MOTION
+  AFFIDAVIT
+}
+
+// Calendar events for case deadlines and meetings
+model CalendarEvent {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  eventDate   DateTime
+  eventType   EventType
+
+  caseId      String?
+  case        Case?     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  lawyerId    String
+  lawyer      User      @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([lawyerId])
+  @@index([eventDate])
+  @@index([caseId])
+}
+
+enum EventType {
+  HEARING
+  DEADLINE
+  MEETING
+  FILING
+  OTHER
 }
