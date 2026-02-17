@@ -127,20 +127,40 @@ export default function LoginPage() {
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Development Info</span>
+                  <span className="px-2 bg-white text-gray-500">Development Quick Login</span>
                 </div>
               </div>
-              <div className="mt-4 text-sm text-gray-600">
-                <p className="font-medium">Default admin credentials:</p>
-                <p className="mt-1">
-                  Email: <code className="bg-gray-100 px-1 py-0.5 rounded">admin@deboraai.local</code>
-                </p>
-                <p className="mt-1">
-                  Password: <code className="bg-gray-100 px-1 py-0.5 rounded">admin123</code>
-                </p>
-                <p className="mt-2 text-xs text-gray-500">
-                  (Create admin user by running: <code>npm run setup:admin</code>)
-                </p>
+              <div className="mt-4 space-y-3">
+                {/* Quick login buttons */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('lawyer@deboraai.local');
+                    setPassword('lawyer123');
+                  }}
+                  className="w-full px-4 py-2 border border-blue-300 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors text-sm font-medium"
+                >
+                  🧑‍⚖️ Login as Lawyer (María García)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('admin@deboraai.local');
+                    setPassword('admin123');
+                  }}
+                  className="w-full px-4 py-2 border border-purple-300 bg-purple-50 text-purple-700 rounded-md hover:bg-purple-100 transition-colors text-sm font-medium"
+                >
+                  👨‍💼 Login as Admin
+                </button>
+
+                <div className="mt-4 text-xs text-gray-500 space-y-1">
+                  <p className="font-medium">Lawyer credentials:</p>
+                  <p>Email: <code className="bg-gray-100 px-1 py-0.5 rounded">lawyer@deboraai.local</code></p>
+                  <p>Password: <code className="bg-gray-100 px-1 py-0.5 rounded">lawyer123</code></p>
+                  <p className="mt-2 font-medium">Admin credentials:</p>
+                  <p>Email: <code className="bg-gray-100 px-1 py-0.5 rounded">admin@deboraai.local</code></p>
+                  <p>Password: <code className="bg-gray-100 px-1 py-0.5 rounded">admin123</code></p>
+                </div>
               </div>
             </div>
           )}
