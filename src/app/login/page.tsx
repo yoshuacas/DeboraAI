@@ -71,9 +71,9 @@ export default function LoginPage() {
               <div className="mt-1">
                 <input
                   id="email"
-                  name="email"
+                  name="username"
                   type="email"
-                  autoComplete="email"
+                  autoComplete="username"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
