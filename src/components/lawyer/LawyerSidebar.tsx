@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import {
   HomeIcon,
   UsersIcon,
@@ -10,7 +11,9 @@ import {
   BookOpenIcon,
   ClipboardDocumentListIcon,
   CalendarIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  CodeBracketIcon,
+  PencilSquareIcon
 } from '@heroicons/react/24/outline';
 
 /**
@@ -21,6 +24,8 @@ import {
  */
 export default function LawyerSidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as any)?.role === 'ADMIN';
 
   const navigation = [
     { name: 'Inicio', href: '/dashboard', icon: HomeIcon },
@@ -31,7 +36,15 @@ export default function LawyerSidebar() {
     { name: 'Biblioteca', href: '/biblioteca', icon: BookOpenIcon },
     { name: 'Plantillas', href: '/plantillas', icon: ClipboardDocumentListIcon },
     { name: 'Calendario', href: '/calendario', icon: CalendarIcon },
+    { name: 'Notas', href: '/notas', icon: PencilSquareIcon },
   ];
+
+  // Add Coding Agent link for admin users
+  const adminNavigation = isAdmin
+    ? [{ name: 'Coding Agent', href: '/admin/code', icon: CodeBracketIcon }]
+    : [];
+
+  const allNavigation = [...navigation, ...adminNavigation];
 
   return (
     <div className="flex h-full w-64 flex-col bg-gray-900">
@@ -42,9 +55,10 @@ export default function LawyerSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-2 py-4">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href;
+        {allNavigation.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;
+          const isAdminLink = item.href === '/admin/code';
 
           return (
             <Link
@@ -58,6 +72,7 @@ export default function LawyerSidebar() {
                     ? 'bg-gray-800 text-white'
                     : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }
+                ${isAdminLink ? 'mt-4 border-t border-gray-700 pt-4' : ''}
               `}
             >
               <Icon

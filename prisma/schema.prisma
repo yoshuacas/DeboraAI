@@ -35,6 +35,7 @@ model User {
   library          LibraryDocument[]
   templates        Template[]
   calendarEvents   CalendarEvent[]
+  notes            Note[]
 }
 
 // NextAuth session model
@@ -262,4 +263,19 @@ enum EventType {
   MEETING
   FILING
   OTHER
+}
+
+// Notes for lawyers (scratchpad)
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+
+  lawyerId  String
+  lawyer    User     @relation(fields: [lawyerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([lawyerId])
 }
