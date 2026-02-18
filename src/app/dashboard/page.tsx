@@ -10,6 +10,7 @@ import {
   CalendarIcon,
   ClockIcon,
   CheckCircleIcon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
@@ -24,7 +25,7 @@ export default async function DashboardPage() {
   const userId = (session?.user as any)?.id;
 
   // Fetch statistics from database
-  const [clientsCount, casesCount, documentsCount, eventsCount, activeCases] =
+  const [clientsCount, casesCount, documentsCount, eventsCount, activeCases, notesCount] =
     await Promise.all([
       prisma.client.count({
         where: { lawyerId: userId },
@@ -43,6 +44,9 @@ export default async function DashboardPage() {
           client: { lawyerId: userId },
           status: 'IN_PROGRESS',
         },
+      }),
+      prisma.note.count({
+        where: { lawyerId: userId },
       }),
     ]);
 
@@ -77,6 +81,17 @@ export default async function DashboardPage() {
     take: 5,
   });
 
+  // Get recent notes
+  const recentNotes = await prisma.note.findMany({
+    where: {
+      lawyerId: userId,
+    },
+    orderBy: {
+      updatedAt: 'desc',
+    },
+    take: 5,
+  });
+
   return (
     <>
       <LawyerHeader
@@ -96,7 +111,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Statistics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <StatsCard
             title="Clientes"
             value={clientsCount}
@@ -129,10 +144,18 @@ export default async function DashboardPage() {
             href="/calendario"
             color="orange"
           />
+          <StatsCard
+            title="Notas"
+            value={notesCount}
+            icon={<PencilSquareIcon className="h-6 w-6" />}
+            description="Notas guardadas"
+            href="/notas"
+            color="indigo"
+          />
         </div>
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Three Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Cases */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
@@ -157,7 +180,7 @@ export default async function DashboardPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">{caso.title}</p>
+                        <p className="font-medium text-gray-900">{caso.name}</p>
                         <p className="text-sm text-gray-600">
                           Cliente: {caso.client.firstName} {caso.client.lastName}
                         </p>
@@ -233,7 +256,7 @@ export default async function DashboardPage() {
                         </p>
                         {event.case && (
                           <p className="text-xs text-gray-500 mt-1">
-                            Caso: {event.case.title}
+                            Caso: {event.case.name}
                           </p>
                         )}
                       </div>
@@ -254,6 +277,61 @@ export default async function DashboardPage() {
               </div>
             )}
           </div>
+
+          {/* Recent Notes */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Notas Recientes
+              </h3>
+              <Link
+                href="/notas"
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                Ver todas
+              </Link>
+            </div>
+
+            {recentNotes.length > 0 ? (
+              <div className="space-y-3">
+                {recentNotes.map((note) => (
+                  <Link
+                    key={note.id}
+                    href="/notas"
+                    className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <PencilSquareIcon className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">{note.title}</p>
+                        <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                          {note.content}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(note.updatedAt).toLocaleDateString('es-ES', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <PencilSquareIcon className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                <p>No tienes notas guardadas</p>
+                <Link
+                  href="/notas"
+                  className="mt-2 inline-block text-blue-600 hover:text-blue-700"
+                >
+                  Crear primera nota
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Quick Actions */}
@@ -261,7 +339,7 @@ export default async function DashboardPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Acciones Rápidas
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Link
               href="/clientes/nuevo"
               className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow border-l-4 border-blue-500"
@@ -278,6 +356,15 @@ export default async function DashboardPage() {
               <BriefcaseIcon className="h-8 w-8 text-green-600 mb-2" />
               <h4 className="font-medium text-gray-900">Nuevo Caso</h4>
               <p className="text-sm text-gray-600">Crear un nuevo caso legal</p>
+            </Link>
+
+            <Link
+              href="/notas"
+              className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow border-l-4 border-indigo-500"
+            >
+              <PencilSquareIcon className="h-8 w-8 text-indigo-600 mb-2" />
+              <h4 className="font-medium text-gray-900">Nueva Nota</h4>
+              <p className="text-sm text-gray-600">Crear una nota rápida</p>
             </Link>
 
             <Link
