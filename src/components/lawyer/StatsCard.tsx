@@ -11,7 +11,7 @@ interface StatsCardProps {
   icon: React.ReactNode;
   description?: string;
   href?: string;
-  color?: 'blue' | 'green' | 'purple' | 'orange' | 'red';
+  color?: 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'indigo';
 }
 
 export default function StatsCard({
@@ -28,6 +28,7 @@ export default function StatsCard({
     purple: 'bg-purple-100 text-purple-600',
     orange: 'bg-orange-100 text-orange-600',
     red: 'bg-red-100 text-red-600',
+    indigo: 'bg-indigo-100 text-indigo-600',
   };
 
   const content = (

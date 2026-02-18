@@ -110,8 +110,8 @@ export async function POST(request: NextRequest) {
     // Get final git status to see what changed
     const finalStatus = await gitManager.getStatus();
     const modifiedFiles = [
-      ...finalStatus.data.modified.filter((f) => !initialFiles.has(f)),
-      ...finalStatus.data.created.filter((f) => !initialFiles.has(f)),
+      ...finalStatus.data.modified.filter((f: string) => !initialFiles.has(f)),
+      ...finalStatus.data.created.filter((f: string) => !initialFiles.has(f)),
       ...(modificationResult.filesModified || []),
     ];
 
